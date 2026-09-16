@@ -1,0 +1,41 @@
+/*
+ * Non-spooky-react-cookie — default palette + native <dialog> backdrop.
+ *
+ * Every color the components use is a `--nsr-*` custom property. The
+ * defaults below follow Tailwind's class dark mode (a `.dark` ancestor).
+ * The provider's `theme` prop writes the same properties as inline styles
+ * on the banner and dialog roots, so a theme value wins in both modes.
+ */
+:root {
+  --nsr-primary: #06b6d4;
+  --nsr-primary-text: #ffffff;
+  --nsr-secondary: #ffffff;
+  --nsr-secondary-text: #18181b;
+  --nsr-accent: #0891b2;
+  --nsr-surface: #ffffff;
+  --nsr-text: #09090b;
+  --nsr-muted: #52525b;
+  --nsr-border: #e4e4e7;
+}
+
+.dark {
+  --nsr-primary: #06b6d4;
+  --nsr-primary-text: #ffffff;
+  --nsr-secondary: #09090b;
+  --nsr-secondary-text: #f4f4f5;
+  --nsr-accent: #22d3ee;
+  --nsr-surface: #09090b;
+  --nsr-text: #fafafa;
+  --nsr-muted: #a1a1aa;
+  --nsr-border: #27272a;
+}
+
+/*
+ * The ::backdrop pseudo-element only exists while the settings dialog is
+ * open (opened via showModal()); no Tailwind utility can target it.
+ */
+.nsr-settings-dialog::backdrop {
+  background: rgb(9 9 11 / 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}

@@ -1,0 +1,407 @@
+# @local/non-spooky-react-cookie
+
+A friendly, lightweight cookie preference manager for React and Next.js. Optional scripts stay out of the DOM until the visitor accepts them. No spooky tracking before the visitor says yes.
+
+## What you get
+
+- `CookieBannerConfigurationProvider` – owns the state, storage, texts, theme, callbacks, **and** the loading/unloading of your third-party scripts
+- `CookieBanner` – the first layer visitors see (with the settings dialog built in)
+- `CookieSettingsDialog` – the full cookie settings dialog (rendered automatically by `CookieBanner`)
+- `Collapsible` – the disclosure used to collapse category sub-items in the settings dialog
+- `CookieSettingsLink` – a small link (e.g. in a footer) that opens the cookie settings dialog
+- `usePreferences` – the hook for consent state and actions
+- `useConsentScript` – **reactive** load status (`blocked | loading | loaded | error`) for a script; consent-gated inside the provider, standalone outside it
+- `loadConsentScript` – imperative `Promise`-based loader for non-hook call sites
+- `registerScript` / `getRegisteredScript` / `getRegisteredScripts` / `unregisterScript` / `clearRegistry` – the script definition store (used internally by the provider, exposed for power users)
+- `ensureScript` / `removeScript` – the consent-aware load/remove primitives
+- `loadScript` / `unloadScript` – low-level script helpers
+- `initGoogleTracker` / `updateGoogleTracker` – Google consent mode sync
+
+## Basic setup
+
+```tsx
+import {
+  CookieBanner,
+  CookieBannerConfigurationProvider,
+} from "@local/non-spooky-react-cookie";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <CookieBannerConfigurationProvider
+      language="de"
+      storageKey="my-site-cookies"
+    >
+      {children}
+      <CookieBanner policyUrl="/datenschutz" />
+    </CookieBannerConfigurationProvider>
+  );
+}
+```
+
+## Defining consent categories
+
+Categories are groups. Items are fine-grained entries inside a category, e.g. "Meta Pixel" inside Marketing. Each item is accepted **independently** — a script gated on an item loads as soon as that item is on, even if the category's master switch is off. The category switch is a convenience that toggles all of its items at once; it is not a hard requirement for the items.
+
+Pass the categories as an object map via the `config` prop:
+
+```tsx
+const consentConfig = {
+  categories: {
+    necessary: { required: true, name: "Necessary" },
+    preferences: { name: "Preferences" },
+    analytics: { name: "Analytics" },
+    marketing: {
+      name: "Marketing",
+      items: {
+        "meta-pixel": {
+          name: "Meta Pixel",
+          description: "Tracks visits and conversions on Facebook.",
+        },
+        "google-ads": {
+          name: "Google Ads",
+          description: "Enables remarketing campaigns.",
+        },
+      },
+    },
+  },
+};
+
+<CookieBannerConfigurationProvider config={consentConfig}>
+  {children}
+</CookieBannerConfigurationProvider>
+```
+
+Omit `config` entirely and the provider falls back to the built-in `necessary` / `preferences` / `analytics` / `marketing` set.
+
+## Managing third-party scripts
+
+Declare your scripts on the provider as an **object map keyed by script id**. The provider loads each one only when its `category` (a category id, or an item id) is accepted, and unloads it when consent is withdrawn. The key is used as the `<script>` element id and for deduplication.
+
+```tsx
+const scripts = {
+  "google-analytics": {
+    category: "analytics",
+    src: "https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX",
+  },
+  hotjar: {
+    category: "analytics",
+    src: "https://static.hotjar.com/c_hotjar-next.js",
+    async: true,
+  },
+  "meta-pixel": {
+    category: "meta-pixel", // item id — loads when this item is accepted (parent not required)
+    src: "https://connect.facebook.net/en_US/fbevents.js",
+    cleanup: () => {
+      // undo side effects the script caused (window globals, listeners, …)
+      delete (window as any).fbq;
+    },
+  },
+};
+
+<CookieBannerConfigurationProvider
+  config={consentConfig}
+  scripts={scripts}
+>
+  {children}
+</CookieBannerConfigurationProvider>
+```
+
+That's the whole API. No `if (isAllowed("analytics"))` checks, no wrapper components — the provider is the single enforcement point.
+
+### Script options
+
+The script id is the **key** in the `scripts` map (not a field). Each entry accepts:
+
+| Prop | Description |
+| --- | --- |
+| `category` | Category id or item id that must be accepted. Items are accepted independently of their parent category. |
+| `src` | URL of the script. Omit for inline scripts. |
+| `children` | Inline script body. |
+| `attrs` | Extra attributes, e.g. `{ "data-foo": "bar" }`. |
+| `async` | Set `script.async`. **Wins over `defer`** when both are set (setting both is invalid in HTML). |
+| `defer` | Set `script.defer`. Ignored when `async` is set. |
+| `onLoad` / `onError` | Load callbacks. |
+| `cleanup` | Runs when consent is withdrawn and the script is removed. Use it to undo globals, listeners, or other side effects. |
+
+### What happens on withdrawal
+
+When a category (or item) flips from accepted to rejected, the provider:
+
+1. Removes the `<script>` element from the DOM.
+2. Runs the script's `cleanup` function (if provided), swallowing any error.
+
+`cleanup` only runs for a script that was actually loaded — a script that was never accepted is left alone when other preferences change.
+
+**Caveat:** none of this undoes cookies the script already set or network requests it already fired. For real teardown (e.g. calling `fbq('shutdown')`), use the `cleanup` hook.
+
+### The registry (advanced)
+
+Under the hood the provider registers every script from its `scripts` prop into the definition store and then syncs it against the current consent state.
+
+If you need to register a script imperatively (e.g. from a custom integration), use:
+
+```ts
+import {
+  registerScript,
+  getRegisteredScript,
+  getRegisteredScripts,
+  unregisterScript,
+  clearRegistry,
+} from "@local/non-spooky-react-cookie";
+
+registerScript("my-tracker", {
+  category: "analytics",
+  src: "https://example.com/tracker.js",
+});
+```
+
+**Note:** the provider only manages the scripts passed via its `scripts` prop — it does **not** read back from the registry on its own. So a script registered this way is picked up by `useConsentScript` (standalone, no provider) and `loadConsentScript`, but it is **not** consent-gated or unloaded by the provider. To have the provider load/unload a script with the visitor's choice, declare it in the provider's `scripts` prop instead. On unmount the provider removes and unregisters **only the scripts from its own `scripts` prop** — standalone registrations in the registry are left alone.
+
+## useConsentScript (reactive load status)
+
+The real value of the library: a reactive 4-state load status for any script. The banner is just the UI — the app owns the actual integration (e.g. a `GoogleMap` component with custom pins), and `useConsentScript` tells it when it's safe to use the loaded global.
+
+```tsx
+import { useConsentScript } from "@local/non-spooky-react-cookie";
+
+function GoogleMap({ locations }: { locations: Location[] }) {
+  const { status, error } = useConsentScript("google-maps");
+
+  if (status === "blocked") {
+    return (
+      <div>
+        Google Maps requires functional cookies.
+        <button onClick={openSettings}>Manage consent</button>
+      </div>
+    );
+  }
+  if (status === "loading") return <MapSkeleton />;
+  if (status === "error") return <MapError error={error} />;
+
+  // `google.maps` is guaranteed to be available here.
+  return <ActualGoogleMap locations={locations} />;
+}
+```
+
+`status` is one of:
+
+| Status | Meaning |
+| --- | --- |
+| `blocked` | Consent for the script's category is not granted (provider mode). |
+| `loading` | Consent granted, the script is being fetched. |
+| `loaded` | The `<script>` is in the DOM and finished loading. |
+| `error` | The script failed to load — or the id was never declared (provider: not in the `scripts` map; standalone: not in the definition store). |
+
+**Inside a `CookieBannerConfigurationProvider`** the status is gated on the script's `category`. **Outside a provider** (standalone) there is no consent gate — the script is loaded on mount from the definition store, so `useConsentScript` also works as a plain consent-less loader. The `<script>` element is created exactly once (deduped by id), so many components can call this for the same id safely.
+
+## loadConsentScript (imperative)
+
+For non-hook call sites (an event handler, a utility, a test):
+
+```ts
+import { loadConsentScript } from "@local/non-spooky-react-cookie";
+
+await loadConsentScript("google-maps"); // resolves once the script is loaded
+```
+
+- Resolves immediately if already `loaded`.
+- Awaits an in-flight `loading`.
+- If `blocked` (never started yet), it **starts loading now** — the imperative path has no consent gate, it just resolves/rejects once the element settles.
+- Rejects if the id was never registered, on the server (SSR), if the script failed (`error`), or if the script element can't be found in the DOM.
+
+> **Tip:** because there's no consent gate here, check `useConsentScript` / `isAllowed` first if you only want to load a script the visitor has agreed to.
+
+## ensureScript / removeScript
+
+- `ensureScript(id, def)` — consent-aware load; drives the status store (`loading` → `loaded`/`error`) and runs `onLoad`/`onError`.
+- `removeScript(id, cleanup?)` — removes the element, runs `cleanup`, resets status to `blocked`.
+- `loadScript` / `unloadScript` — the low-level DOM helpers (no status tracking).
+
+## Your own texts (fully typed)
+
+`language` picks the built-in texts (`en` default, `de`, `pl`). `texts` lets you override or extend any string — every field is typed, so you get full autocomplete.
+
+```tsx
+<CookieBannerConfigurationProvider
+  language="de"
+  texts={{
+    banner: {
+      title: "Unsere Datenschutzeinstellungen",
+    },
+    categories: {
+      marketing: {
+        items: {
+          "meta-pixel": {
+            title: "Meta Pixel (Facebook)",
+          },
+        },
+      },
+    },
+  }}
+>
+  {children}
+</CookieBannerConfigurationProvider>
+```
+
+## Your own colors
+
+One simple `theme` prop. Provide any subset — everything else keeps the built-in look. Every color is a `--nsr-*` CSS custom property. The built-in defaults live in the package stylesheet and follow Tailwind's class dark mode (a `.dark` ancestor); a value you pass wins in both light and dark mode.
+
+```tsx
+<CookieBannerConfigurationProvider
+  theme={{
+    primaryColor: "#0ea5e9",
+    primaryTextColor: "#ffffff",
+    accentColor: "#0284c7",
+    surfaceColor: "#ffffff",
+  }}
+>
+  {children}
+</CookieBannerConfigurationProvider>
+```
+
+## Your own classes and components (shadcn-style)
+
+Every component accepts `className` plus per-part class props, and you can swap the default `Button`/`Switch` for your own components. `CookieBanner` renders the privacy-policy link only when you pass `policyUrl`. The settings dialog is a native `<dialog>` (top layer, focus trap, and Escape-to-close are built in); its dim/blur backdrop is styled by the package itself, and `overlayClassName` is applied to the click-to-close layer behind the panel.
+
+```tsx
+<CookieBanner
+  className="rounded-none"
+  contentClassName="border-dashed"
+  buttonClassName="w-full"
+  components={{ Button: MyButton }}
+/>
+
+<CookieSettingsDialog
+  contentClassName="max-w-3xl"
+  categoryCardClassName="border-emerald-200"
+  buttonClassName="rounded-full"
+/>
+```
+
+## usePreferences
+
+```tsx
+import { usePreferences } from "@local/non-spooky-react-cookie";
+
+function MyComponent() {
+  const {
+    loaded,
+    hasDecision,
+    preferences,
+    acceptAll,
+    rejectAll,
+    savePreferences,
+    resetPreferences,
+    openSettings,
+    closeSettings,
+    isAllowed,
+  } = usePreferences();
+
+  if (!isAllowed("analytics")) return null;
+  return <ChartWidget />;
+}
+```
+
+## Provider options
+
+```tsx
+<CookieBannerConfigurationProvider
+  language="de"
+  storageKey="my-site-cookies"
+  version="2026-08-21"
+  onDecision={(state) => {
+    console.log(state.accepted);
+  }}
+>
+  {children}
+</CookieBannerConfigurationProvider>
+```
+
+- `config` – consent categories (object map, keyed by category id)
+- `scripts` – third-party scripts to manage (object map, keyed by script id — see "Managing third-party scripts")
+- `storageKey` – localStorage key and/or cookie name (default `"non-spooky-react-cookie"`)
+- `storage` – where the decision is persisted: `"localStorage"` (default), `"cookie"`, `"both"`, or a custom adapter (see "Storage")
+- `cookieOptions` – cookie attributes for `"cookie"` / `"both"` (see "Storage")
+- `initialPreferences` – decision read on the server, so the first render already matches (see "Storage")
+- `version` – bump this to ask visitors again (old stored state is ignored)
+- `googleConsentMode` – opt in to Google consent mode sync (see "Google tracker")
+- `onDecision` – called whenever the visitor makes or changes their choice
+
+## Storage
+
+The decision (`PreferencesState`: `version`, `updatedAt`, `accepted`) is stored as JSON under `storageKey`. Pick where with the `storage` prop:
+
+| `storage`          | Where                              | Server can read it | Notes |
+| ------------------ | ---------------------------------- | ------------------ | ----- |
+| `"localStorage"`   | `window.localStorage` (default)    | no                 | per origin |
+| `"cookie"`         | a cookie named `storageKey`        | yes                | can span subdomains via `cookieOptions.domain` |
+| `"both"`           | cookie **and** localStorage        | yes                | reads the cookie first, then localStorage |
+
+`"both"` is the safe choice when a site moves from localStorage to cookies: visitors who already decided keep their choice (read from localStorage), and the next decision is written to both. The cookie wins on read because it is the copy a server can see.
+
+```tsx
+<CookieBannerConfigurationProvider
+  storage="cookie"
+  cookieOptions={{ domain: ".example.com", maxAge: 60 * 60 * 24 * 180 }}
+>
+```
+
+Cookie defaults: `Path=/`, `Max-Age=31536000` (365 days), `SameSite=Lax`, `Secure` on https. `sameSite: "none"` always sets `Secure`. The payload is the url-encoded JSON state, a few hundred bytes for typical configs.
+
+### Custom adapter
+
+`storage` also accepts any object with `get`, `set` and `remove` working on strings. The library does the JSON parsing and validation, so the adapter never sees the state shape.
+
+```tsx
+const memoryStorage: PreferencesStorage = {
+  get: (key) => store.get(key) ?? null,
+  set: (key, value) => void store.set(key, value),
+  remove: (key) => void store.delete(key),
+};
+
+<CookieBannerConfigurationProvider storage={memoryStorage}>
+```
+
+The built-in adapters are exported too: `localStorageAdapter`, `createCookieStorage(options)`, `createBothStorage(options)`.
+
+### Reading the decision on the server
+
+With `"cookie"` or `"both"`, a server can read the decision before rendering. `readPreferencesFromCookies` is a pure function (no `window`, no React): pass it the raw `Cookie` header or a cookie store with `get(name)` such as the one from Next.js `cookies()`. Hand the result to `initialPreferences` so the first render already knows the decision — no banner flash, and `usePreferences().loaded` is `true` from the start.
+
+```tsx
+// app/layout.tsx (server component)
+import { cookies } from "next/headers";
+import { readPreferencesFromCookies } from "@local/non-spooky-react-cookie";
+
+export default async function RootLayout({ children }) {
+  const initial = readPreferencesFromCookies(await cookies(), "my-site-cookies");
+  return <ConsentProvider initialPreferences={initial}>{children}</ConsentProvider>;
+}
+```
+
+Reading `cookies()` makes the route dynamic, so this needs a Node or edge runtime — it does not work with `output: "export"`. After mount the provider re-reads the client storage, which stays the source of truth.
+
+## Google tracker
+
+If you use Google tags, set `googleConsentMode` on the provider. It then initializes consent mode with everything denied and updates it on every decision, based on the `analytics` and `marketing` categories. Without the prop the provider never touches `window.gtag` / `window.dataLayer`.
+
+```tsx
+<CookieBannerConfigurationProvider googleConsentMode scripts={scripts}>
+  {children}
+</CookieBannerConfigurationProvider>
+```
+ Because consent can be fine-grained, a category grants its signals when the category itself **or any of its items** is accepted — so accepting only "Google Ads" (Marketing master off) still grants `ad_storage`, matching the scripts that actually load.
+
+`updateGoogleTracker(state, categories?)` accepts the category list as an optional second argument for that item-level behavior; without it, it falls back to the plain `analytics` / `marketing` category ids.
+
+## Migrating from 0.x
+
+- `categories` (array) → `config` (object map, keyed by category id).
+- `scripts` (array of `{ id, ... }`) → **object map keyed by script id**. The `id` field is removed — the key is the id. `registerScript` is now `registerScript(id, def)`.
+- `AgreementFirewall` is **gone**. Move each script into the provider's `scripts` prop. `requireCategoryAcceptance` / `requireItemAcceptance` both map to `category`.
+- The `AgreementFirewallProps` type export is removed.
+- Google consent mode is opt-in: add `googleConsentMode` to the provider if you rely on it.
+- `CookieBanner` no longer defaults `policyUrl` to `/datenschutz`; pass it explicitly.
+- Withdrawal no longer deletes `window[<script id>]`; put that in the script's `cleanup`.
+- Stored state from the old `@local/privacy-consent` shape is no longer migrated.
