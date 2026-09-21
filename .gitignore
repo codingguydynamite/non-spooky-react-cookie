@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.tgz
+.DS_Store
+.vite/
+examples/*/dist/

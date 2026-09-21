@@ -4,7 +4,7 @@ import type * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { usePreferences } from "./hooks/usePreferences";
 import type { CookieSettingsDialogProps } from "./types";
-import { Button, Collapsible, Switch, cn } from "./ui";
+import { Button, Collapsible, cn, Switch } from "./ui";
 
 /** Renders nothing while closed; the open dialog mounts fresh each time. */
 export function CookieSettingsDialog(props: Readonly<CookieSettingsDialogProps>) {
@@ -49,9 +49,9 @@ function OpenSettingsDialog({
   const setAccepted = (ids: string[], value: boolean) =>
     setDraft((current) => {
       const next = { ...current };
-      ids.forEach((id) => {
+      for (const id of ids) {
         next[id] = value;
-      });
+      }
       return next;
     });
 
@@ -65,10 +65,7 @@ function OpenSettingsDialog({
   return (
     <dialog
       aria-labelledby="nsr-settings-title"
-      className={cn(
-        "nsr-settings-dialog fixed inset-0 z-[100] m-auto flex items-center justify-center p-4",
-        className,
-      )}
+      className={cn("nsr-settings-dialog", className)}
       onCancel={handleCancel}
       ref={dialogRef}
       style={themeStyle}
@@ -79,40 +76,20 @@ function OpenSettingsDialog({
       */}
       <button
         aria-label={texts.dialog.close}
-        className={cn("absolute inset-0 -z-10 cursor-default", overlayClassName)}
+        className={cn("nsr-dialog__overlay", overlayClassName)}
         onClick={closeSettings}
         tabIndex={-1}
         type="button"
       />
-      <div
-        className={cn(
-          "relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[var(--nsr-border)] bg-[var(--nsr-surface)] shadow-2xl",
-          contentClassName,
-        )}
-      >
-        <div
-          className={cn(
-            "shrink-0 border-b border-[var(--nsr-border)] px-4 py-4 sm:px-6 sm:py-6",
-            headerClassName,
-          )}
-        >
-          <h2
-            id="nsr-settings-title"
-            className="text-lg font-bold text-[var(--nsr-text)] sm:text-xl"
-          >
+      <div className={cn("nsr-dialog__panel", contentClassName)}>
+        <div className={cn("nsr-dialog__header", headerClassName)}>
+          <h2 id="nsr-settings-title" className="nsr-dialog__title">
             {texts.dialog.title}
           </h2>
-          <p className="mt-1.5 text-sm leading-5 text-[var(--nsr-muted)] sm:mt-2 sm:leading-6">
-            {texts.dialog.description}
-          </p>
+          <p className="nsr-dialog__description">{texts.dialog.description}</p>
         </div>
 
-        <div
-          className={cn(
-            "min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6",
-            bodyClassName,
-          )}
-        >
+        <div className={cn("nsr-dialog__body", bodyClassName)}>
           {categories.map((category) => {
             const { title, description } = resolveLabel(category.id, category);
             const required = Boolean(category.required);
@@ -121,21 +98,17 @@ function OpenSettingsDialog({
             return (
               <section
                 className={cn(
-                  "rounded-2xl border border-[var(--nsr-border)] p-4",
-                  required && "bg-zinc-50 dark:bg-zinc-900/60",
+                  "nsr-category",
+                  required && "nsr-category--required",
                   categoryCardClassName,
                 )}
                 key={category.id}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="nsr-category__header">
                   <div>
-                    <h3 className="font-semibold text-[var(--nsr-text)]">
-                      {title}
-                    </h3>
+                    <h3 className="nsr-category__title">{title}</h3>
                     {description ? (
-                      <p className="mt-1 text-sm leading-6 text-[var(--nsr-muted)]">
-                        {description}
-                      </p>
+                      <p className="nsr-category__description">{description}</p>
                     ) : null}
                   </div>
                   {/* Master switch: toggles the category and all of its items. */}
@@ -144,10 +117,7 @@ function OpenSettingsDialog({
                     checked={Boolean(draft[category.id])}
                     disabled={required}
                     onCheckedChange={(value) =>
-                      setAccepted(
-                        [category.id, ...items.map((item) => item.id)],
-                        value,
-                      )
+                      setAccepted([category.id, ...items.map((item) => item.id)], value)
                     }
                   />
                 </div>
@@ -156,25 +126,17 @@ function OpenSettingsDialog({
                   <Collapsible
                     count={items.length}
                     label={texts.dialog.itemsLabel}
-                    contentClassName="mt-2 space-y-2 border-t border-[var(--nsr-border)] pt-3"
+                    contentClassName="nsr-category__items"
                   >
                     {items.map((item) => {
                       const itemLabel = resolveLabel(item.id, item);
 
                       return (
-                        <div
-                          className={cn(
-                            "flex items-start justify-between gap-4 rounded-xl px-2 py-1.5",
-                            itemClassName,
-                          )}
-                          key={item.id}
-                        >
+                        <div className={cn("nsr-item", itemClassName)} key={item.id}>
                           <div>
-                            <h4 className="text-sm font-medium text-[var(--nsr-text)]">
-                              {itemLabel.title}
-                            </h4>
+                            <h4 className="nsr-item__title">{itemLabel.title}</h4>
                             {itemLabel.description ? (
-                              <p className="mt-0.5 text-xs leading-5 text-[var(--nsr-muted)]">
+                              <p className="nsr-item__description">
                                 {itemLabel.description}
                               </p>
                             ) : null}
@@ -183,9 +145,7 @@ function OpenSettingsDialog({
                             aria-label={itemLabel.title}
                             checked={Boolean(draft[item.id])}
                             disabled={required}
-                            onCheckedChange={(value) =>
-                              setAccepted([item.id], value)
-                            }
+                            onCheckedChange={(value) => setAccepted([item.id], value)}
                           />
                         </div>
                       );
@@ -197,14 +157,9 @@ function OpenSettingsDialog({
           })}
         </div>
 
-        <div
-          className={cn(
-            "flex shrink-0 flex-col-reverse gap-2 border-t border-[var(--nsr-border)] p-4 sm:flex-row sm:justify-end sm:gap-3 sm:p-6",
-            footerClassName,
-          )}
-        >
+        <div className={cn("nsr-dialog__footer", footerClassName)}>
           <ButtonComponent
-            className={cn("w-full sm:w-auto", buttonClassName)}
+            className={cn("nsr-dialog__button", buttonClassName)}
             onClick={closeSettings}
             type="button"
             variant="ghost"
@@ -212,7 +167,7 @@ function OpenSettingsDialog({
             {texts.dialog.close}
           </ButtonComponent>
           <ButtonComponent
-            className={cn("w-full sm:w-auto", buttonClassName)}
+            className={cn("nsr-dialog__button", buttonClassName)}
             onClick={() => savePreferences({ accepted: draft })}
             type="button"
             variant="primary"

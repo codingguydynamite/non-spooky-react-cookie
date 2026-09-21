@@ -1,12 +1,7 @@
 "use client";
 
-import type * as React from "react";
 import { useId, useState } from "react";
-import type {
-  ButtonLikeProps,
-  CollapsibleProps,
-  SwitchLikeProps,
-} from "./types";
+import type { ButtonLikeProps, CollapsibleProps, SwitchLikeProps } from "./types";
 
 export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -17,23 +12,10 @@ export function cn(...classes: Array<string | false | null | undefined>) {
  * Colors come from the `--nsr-*` variables: defaults in `styles.css`,
  * overrides from the provider's `theme` prop.
  */
-export function Button({
-  className,
-  variant = "secondary",
-  ...props
-}: ButtonLikeProps) {
+export function Button({ className, variant = "secondary", ...props }: ButtonLikeProps) {
   return (
     <button
-      className={cn(
-        "inline-flex h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        variant === "primary" &&
-          "bg-[var(--nsr-primary)] text-[var(--nsr-primary-text)] hover:bg-cyan-400",
-        variant === "secondary" &&
-          "border border-[var(--nsr-border)] bg-[var(--nsr-secondary)] text-[var(--nsr-secondary-text)] hover:bg-zinc-50 dark:hover:bg-zinc-900",
-        variant === "ghost" &&
-          "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100",
-        className,
-      )}
+      className={cn("nsr-button", `nsr-button--${variant}`, className)}
       {...props}
     />
   );
@@ -57,17 +39,9 @@ export function Switch({
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onCheckedChange(!checked)}
-      className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
-        checked ? "bg-[var(--nsr-primary)]" : "bg-zinc-300 dark:bg-zinc-700",
-      )}
+      className="nsr-switch"
     >
-      <span
-        className={cn(
-          "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform",
-          checked ? "translate-x-5" : "translate-x-0",
-        )}
-      />
+      <span className="nsr-switch__thumb" />
     </button>
   );
 }
@@ -99,25 +73,19 @@ export function Collapsible({
   };
 
   return (
-    <div>
+    <div className={cn("nsr-collapsible", isOpen && "nsr-collapsible--open")}>
       <button
         type="button"
         aria-controls={regionId}
         aria-expanded={isOpen}
-        className={cn(
-          "flex w-full items-center justify-between gap-2 rounded-lg py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2",
-          className,
-        )}
+        className={cn("nsr-collapsible__trigger", className)}
         onClick={toggle}
       >
-        <span className="text-xs font-semibold text-[var(--nsr-primary)]">
+        <span className="nsr-collapsible__label">
           {count} {label}
         </span>
         <svg
-          className={cn(
-            "h-6 w-6 shrink-0 text-[var(--nsr-primary)] transition-transform duration-200",
-            isOpen && "rotate-180",
-          )}
+          className="nsr-collapsible__chevron"
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -130,7 +98,7 @@ export function Collapsible({
         </svg>
       </button>
       {isOpen ? (
-        <div className={contentClassName} id={regionId}>
+        <div className={cn("nsr-collapsible__content", contentClassName)} id={regionId}>
           {children}
         </div>
       ) : null}

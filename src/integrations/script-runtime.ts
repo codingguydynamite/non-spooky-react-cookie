@@ -57,11 +57,7 @@ export function getScriptError(id: string): unknown {
  * Sets the status (and error, if any) for `id` and notifies subscribers.
  * The error is always replaced, so a later `loaded` clears an old failure.
  */
-export function setScriptStatus(
-  id: string,
-  status: ScriptStatus,
-  error?: unknown,
-): void {
+export function setScriptStatus(id: string, status: ScriptStatus, error?: unknown): void {
   const entry = getEntry(id);
   entry.status = status;
   entry.error = error;

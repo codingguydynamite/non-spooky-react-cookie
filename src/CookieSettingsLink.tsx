@@ -1,8 +1,8 @@
 "use client";
 
 import { usePreferences } from "./hooks/usePreferences";
-import { cn } from "./ui";
 import type { CookieSettingsLinkProps } from "./types";
+import { cn } from "./ui";
 
 /**
  * A small link (e.g. in a footer) that opens the cookie settings dialog.
@@ -19,7 +19,7 @@ export function CookieSettingsLink({
 
   return (
     <button
-      className={cn("text-left transition-colors hover:text-zinc-400", className)}
+      className={cn("nsr-settings-link", className)}
       onClick={(event) => {
         // Open the dialog first, then let the consumer's handler run — the
         // spread below must not be able to silently override the built-in.

@@ -1,7 +1,7 @@
-import type { DeepPartial, Texts } from "./types";
 import { de } from "./languages/de";
 import { en } from "./languages/en";
 import { pl } from "./languages/pl";
+import type { DeepPartial, Texts } from "./types";
 
 const builtInTexts: Record<string, Texts> = {
   de,
@@ -40,10 +40,7 @@ function mergeDeep<T extends Record<string, unknown>>(
  * Resolves the final texts: built-in texts for the chosen language,
  * merged with any user-provided overrides. Unknown languages fall back to English.
  */
-export function resolveTexts(
-  language: string = "en",
-  texts?: DeepPartial<Texts>,
-): Texts {
+export function resolveTexts(language: string = "en", texts?: DeepPartial<Texts>): Texts {
   const base = builtInTexts[language] ?? builtInTexts.en;
 
   return mergeDeep(base, texts);

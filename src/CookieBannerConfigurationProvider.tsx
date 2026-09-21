@@ -1,24 +1,11 @@
 "use client";
 
 import type * as React from "react";
-import {
-  createContext,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  initGoogleTracker,
-  updateGoogleTracker,
-} from "./integrations/google-tracker";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { initGoogleTracker, updateGoogleTracker } from "./integrations/google-tracker";
 import { ensureScript, removeScript } from "./integrations/script-loader";
-import {
-  registerScript,
-  unregisterScript,
-} from "./integrations/script-registry";
+import { registerScript, unregisterScript } from "./integrations/script-registry";
 import { resolveTexts } from "./resolve-texts";
-import "./styles.css";
 import {
   DEFAULT_STORAGE_KEY,
   readPreferences,
@@ -28,8 +15,8 @@ import {
 } from "./storage";
 import type {
   ConsentConfig,
-  CookieBannerContextValue,
   CookieBannerConfigurationProviderProps,
+  CookieBannerContextValue,
   CookieStorageOptions,
   PreferenceCategory,
   PreferencesState,
@@ -131,8 +118,7 @@ export function CookieBannerConfigurationProvider({
     () =>
       resolveStorage(
         storage,
-        (JSON.parse(cookieOptionsKey) as CookieStorageOptions | null) ??
-          undefined,
+        (JSON.parse(cookieOptionsKey) as CookieStorageOptions | null) ?? undefined,
       ),
     [storage, cookieOptionsKey],
   );
@@ -195,7 +181,9 @@ export function CookieBannerConfigurationProvider({
   // may also hold scripts of other providers or standalone consumers.
   useEffect(() => {
     const entries = Object.entries(scripts ?? {});
-    entries.forEach(([id, def]) => registerScript(id, def));
+    for (const [id, def] of entries) {
+      registerScript(id, def);
+    }
 
     return () => {
       entries.forEach(([id, def]) => {
@@ -337,8 +325,6 @@ export function CookieBannerConfigurationProvider({
   );
 
   return (
-    <CookieBannerContext.Provider value={value}>
-      {children}
-    </CookieBannerContext.Provider>
+    <CookieBannerContext.Provider value={value}>{children}</CookieBannerContext.Provider>
   );
 }

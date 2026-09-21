@@ -1,47 +1,46 @@
-export { CookieBannerConfigurationProvider } from "./CookieBannerConfigurationProvider";
-export { usePreferences } from "./hooks/usePreferences";
-export { useConsentScript } from "./hooks/useConsentScript";
-export type { UseConsentScriptResult } from "./hooks/useConsentScript";
+"use client";
+
 export { CookieBanner } from "./CookieBanner";
+export { CookieBannerConfigurationProvider } from "./CookieBannerConfigurationProvider";
 export { CookieSettingsDialog } from "./CookieSettingsDialog";
 export { CookieSettingsLink } from "./CookieSettingsLink";
+export type { UseConsentScriptResult } from "./hooks/useConsentScript";
+export { useConsentScript } from "./hooks/useConsentScript";
+export { usePreferences } from "./hooks/usePreferences";
 export {
   initGoogleTracker,
   updateGoogleTracker,
 } from "./integrations/google-tracker";
-export {
-  registerScript,
-  getRegisteredScripts,
-  getRegisteredScript,
-  unregisterScript,
-  clearRegistry,
-} from "./integrations/script-registry";
-export {
-  loadScript,
-  unloadScript,
-  ensureScript,
-  removeScript,
-  loadConsentScript,
-} from "./integrations/script-loader";
 export type { LoadScriptOptions } from "./integrations/script-loader";
+export {
+  ensureScript,
+  loadConsentScript,
+  loadScript,
+  removeScript,
+  unloadScript,
+} from "./integrations/script-loader";
+export {
+  clearRegistry,
+  getRegisteredScript,
+  getRegisteredScripts,
+  registerScript,
+  unregisterScript,
+} from "./integrations/script-registry";
 export type { ScriptStatus } from "./integrations/script-runtime";
 export {
   createBothStorage,
   createCookieStorage,
   localStorageAdapter,
 } from "./storage";
-export { readPreferencesFromCookies } from "./storage/server";
-export type { CookieSource } from "./storage/server";
-export { Button, Collapsible, Switch, cn } from "./ui";
 export type {
   ButtonLikeProps,
   CategoryTexts,
+  CollapsibleProps,
   ConsentCategoryConfig,
   ConsentConfig,
   ConsentItemConfig,
-  ConsentScripts,
   ConsentScript,
-  CollapsibleProps,
+  ConsentScripts,
   CookieBannerConfigurationProviderProps,
   CookieBannerContextValue,
   CookieBannerProps,
@@ -62,3 +61,4 @@ export type {
   Texts,
   ThemePalette,
 } from "./types";
+export { Button, Collapsible, cn, Switch } from "./ui";

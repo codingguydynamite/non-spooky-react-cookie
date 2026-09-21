@@ -1,8 +1,4 @@
-import type {
-  CookieStorageOptions,
-  PreferencesStorage,
-  StorageKind,
-} from "../types";
+import type { CookieStorageOptions, PreferencesStorage, StorageKind } from "../types";
 
 const DEFAULT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 365 days, in seconds
 
@@ -52,8 +48,7 @@ export function createCookieStorage(
 
   // `SameSite=None` is rejected by browsers without `Secure`.
   const isSecure = () =>
-    sameSite === "none" ||
-    (options.secure ?? window.location.protocol === "https:");
+    sameSite === "none" || (options.secure ?? window.location.protocol === "https:");
 
   // The remove call must repeat Path/Domain, otherwise the browser treats it
   // as a different cookie and keeps the original.
@@ -70,10 +65,14 @@ export function createCookieStorage(
 
   return {
     get: (key) => findCookie(document.cookie, key),
+    // The Cookie Store API is async and still missing in Safari/Firefox; the
+    // synchronous `document.cookie` write keeps the adapter contract simple.
     set: (key, value) => {
+      // biome-ignore lint/suspicious/noDocumentCookie: sync write on purpose
       document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; ${attributes(maxAge)}`;
     },
     remove: (key) => {
+      // biome-ignore lint/suspicious/noDocumentCookie: sync write on purpose
       document.cookie = `${encodeURIComponent(key)}=; ${attributes(0)}`;
     },
   };
@@ -85,9 +84,7 @@ export function createCookieStorage(
  * see; the fallback keeps visitors who decided before a site switched from
  * localStorage to cookies from being asked again.
  */
-export function createBothStorage(
-  options?: CookieStorageOptions,
-): PreferencesStorage {
+export function createBothStorage(options?: CookieStorageOptions): PreferencesStorage {
   const cookie = createCookieStorage(options);
   const local = localStorageAdapter;
 

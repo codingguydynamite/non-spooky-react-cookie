@@ -356,6 +356,12 @@ export type CookieBannerProps = {
   buttonClassName?: string;
   /** Swap the default Button for your own. */
   components?: PreferenceComponents;
+  /**
+   * Props forwarded to the settings dialog that `CookieBanner` renders for
+   * you (class names for its parts). Use this instead of rendering a second
+   * `CookieSettingsDialog`.
+   */
+  dialogProps?: CookieSettingsDialogProps;
 };
 
 export type CookieSettingsDialogProps = {

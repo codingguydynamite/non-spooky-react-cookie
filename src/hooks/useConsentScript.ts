@@ -1,20 +1,15 @@
 "use client";
 
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useContext, useEffect, useSyncExternalStore } from "react";
 import { CookieBannerContext } from "../CookieBannerConfigurationProvider";
 import { ensureScript } from "../integrations/script-loader";
 import { getRegisteredScript } from "../integrations/script-registry";
+import type { ScriptStatus } from "../integrations/script-runtime";
 import {
   getScriptError,
   getScriptStatus,
   subscribeScript,
 } from "../integrations/script-runtime";
-import type { ScriptStatus } from "../integrations/script-runtime";
 
 export type UseConsentScriptResult = {
   /**

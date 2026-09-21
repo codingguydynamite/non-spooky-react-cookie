@@ -174,8 +174,7 @@ export function loadConsentScript(id: string): Promise<void> {
     );
   }
 
-  const failure = () =>
-    toError(getScriptError(id), `Script "${id}" failed to load.`);
+  const failure = () => toError(getScriptError(id), `Script "${id}" failed to load.`);
 
   if (getScriptStatus(id) === "blocked") ensureScript(id, def);
 

@@ -1,42 +1,67 @@
-# @local/non-spooky-react-cookie
+# non-spooky-react-cookie
 
-A friendly, lightweight cookie preference manager for React and Next.js. Optional scripts stay out of the DOM until the visitor accepts them. No spooky tracking before the visitor says yes.
+[![npm](https://img.shields.io/npm/v/non-spooky-react-cookie)](https://www.npmjs.com/package/non-spooky-react-cookie)
+[![CI](https://github.com/KamilAdamski/non-spooky-react-cookie/actions/workflows/ci.yml/badge.svg)](https://github.com/KamilAdamski/non-spooky-react-cookie/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/non-spooky-react-cookie)](./LICENSE)
 
-## What you get
+A friendly, lightweight cookie consent manager for React and Next.js. Optional scripts stay out of the DOM until the visitor accepts them. No spooky tracking before the visitor says yes.
 
-- `CookieBannerConfigurationProvider` – owns the state, storage, texts, theme, callbacks, **and** the loading/unloading of your third-party scripts
-- `CookieBanner` – the first layer visitors see (with the settings dialog built in)
-- `CookieSettingsDialog` – the full cookie settings dialog (rendered automatically by `CookieBanner`)
-- `Collapsible` – the disclosure used to collapse category sub-items in the settings dialog
-- `CookieSettingsLink` – a small link (e.g. in a footer) that opens the cookie settings dialog
-- `usePreferences` – the hook for consent state and actions
-- `useConsentScript` – **reactive** load status (`blocked | loading | loaded | error`) for a script; consent-gated inside the provider, standalone outside it
-- `loadConsentScript` – imperative `Promise`-based loader for non-hook call sites
-- `registerScript` / `getRegisteredScript` / `getRegisteredScripts` / `unregisterScript` / `clearRegistry` – the script definition store (used internally by the provider, exposed for power users)
-- `ensureScript` / `removeScript` – the consent-aware load/remove primitives
-- `loadScript` / `unloadScript` – low-level script helpers
-- `initGoogleTracker` / `updateGoogleTracker` – Google consent mode sync
+- Banner + settings dialog (native `<dialog>`, keyboard and screen-reader friendly)
+- Categories and fine-grained items, each accepted independently
+- The provider loads and unloads your third-party scripts with consent, including `cleanup`
+- `useConsentScript`: a reactive `blocked | loading | loaded | error` status for any script
+- Persist to localStorage, a cookie, both, or your own adapter; read the decision on the server
+- Built-in `en` / `de` / `pl` texts, fully typed overrides
+- Plain CSS with `--nsr-*` variables and dark mode. No Tailwind or other framework required
+- React 18+, works with React 19 and the Next.js App Router
+
+Try every feature in the [examples playground](./examples/README.md).
+
+## Install
+
+```bash
+pnpm add non-spooky-react-cookie
+# or: npm install non-spooky-react-cookie
+```
+
+Import the stylesheet once, anywhere in your app (for Next.js: `app/layout.tsx`):
+
+```ts
+import "non-spooky-react-cookie/styles.css";
+```
 
 ## Basic setup
 
 ```tsx
-import {
-  CookieBanner,
-  CookieBannerConfigurationProvider,
-} from "@local/non-spooky-react-cookie";
+import { CookieBanner, CookieBannerConfigurationProvider } from "non-spooky-react-cookie";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <CookieBannerConfigurationProvider
-      language="de"
-      storageKey="my-site-cookies"
-    >
+    <CookieBannerConfigurationProvider language="de" storageKey="my-site-cookies">
       {children}
       <CookieBanner policyUrl="/datenschutz" />
     </CookieBannerConfigurationProvider>
   );
 }
 ```
+
+In the Next.js App Router put this in a client component (`"use client"`) and render it from your root layout. The package's main entry is itself a client module.
+
+## What you get
+
+- `CookieBannerConfigurationProvider` – owns the state, storage, texts, theme, callbacks, **and** the loading/unloading of your third-party scripts
+- `CookieBanner` – the first layer visitors see (with the settings dialog built in)
+- `CookieSettingsDialog` – the full cookie settings dialog (rendered automatically by `CookieBanner`)
+- `CookieSettingsLink` – a small link (e.g. in a footer) that opens the cookie settings dialog
+- `Button` / `Switch` / `Collapsible` – the default primitives, exported so you can wrap or reuse them
+- `usePreferences` – the hook for consent state and actions
+- `useConsentScript` – **reactive** load status (`blocked | loading | loaded | error`) for a script; consent-gated inside the provider, standalone outside it
+- `loadConsentScript` – imperative `Promise`-based loader for non-hook call sites
+- `registerScript` / `getRegisteredScript` / `getRegisteredScripts` / `unregisterScript` / `clearRegistry` – the script definition store (used internally by the provider, exposed for power users)
+- `ensureScript` / `removeScript` / `loadScript` / `unloadScript` – the load/remove primitives
+- `initGoogleTracker` / `updateGoogleTracker` – Google consent mode sync
+- `localStorageAdapter` / `createCookieStorage` / `createBothStorage` – the built-in storage adapters
+- `non-spooky-react-cookie/server` → `readPreferencesFromCookies` – read the decision on the server (no React, no `window`)
 
 ## Defining consent categories
 
@@ -98,10 +123,7 @@ const scripts = {
   },
 };
 
-<CookieBannerConfigurationProvider
-  config={consentConfig}
-  scripts={scripts}
->
+<CookieBannerConfigurationProvider config={consentConfig} scripts={scripts}>
   {children}
 </CookieBannerConfigurationProvider>
 ```
@@ -141,13 +163,7 @@ Under the hood the provider registers every script from its `scripts` prop into 
 If you need to register a script imperatively (e.g. from a custom integration), use:
 
 ```ts
-import {
-  registerScript,
-  getRegisteredScript,
-  getRegisteredScripts,
-  unregisterScript,
-  clearRegistry,
-} from "@local/non-spooky-react-cookie";
+import { registerScript } from "non-spooky-react-cookie";
 
 registerScript("my-tracker", {
   category: "analytics",
@@ -162,10 +178,11 @@ registerScript("my-tracker", {
 The real value of the library: a reactive 4-state load status for any script. The banner is just the UI — the app owns the actual integration (e.g. a `GoogleMap` component with custom pins), and `useConsentScript` tells it when it's safe to use the loaded global.
 
 ```tsx
-import { useConsentScript } from "@local/non-spooky-react-cookie";
+import { useConsentScript, usePreferences } from "non-spooky-react-cookie";
 
 function GoogleMap({ locations }: { locations: Location[] }) {
   const { status, error } = useConsentScript("google-maps");
+  const { openSettings } = usePreferences();
 
   if (status === "blocked") {
     return (
@@ -199,7 +216,7 @@ function GoogleMap({ locations }: { locations: Location[] }) {
 For non-hook call sites (an event handler, a utility, a test):
 
 ```ts
-import { loadConsentScript } from "@local/non-spooky-react-cookie";
+import { loadConsentScript } from "non-spooky-react-cookie";
 
 await loadConsentScript("google-maps"); // resolves once the script is loaded
 ```
@@ -243,9 +260,15 @@ await loadConsentScript("google-maps"); // resolves once the script is loaded
 </CookieBannerConfigurationProvider>
 ```
 
-## Your own colors
+Category and item names passed through `config` win over `texts`.
 
-One simple `theme` prop. Provide any subset — everything else keeps the built-in look. Every color is a `--nsr-*` CSS custom property. The built-in defaults live in the package stylesheet and follow Tailwind's class dark mode (a `.dark` ancestor); a value you pass wins in both light and dark mode.
+## Styling
+
+The package ships one small stylesheet and no framework dependency. Three layers, from simplest to most control:
+
+### 1. The `theme` prop
+
+Provide any subset of colors; everything else keeps the built-in look. Every color is a `--nsr-*` CSS custom property written inline on the banner and dialog roots, so a value you pass wins in both light and dark mode.
 
 ```tsx
 <CookieBannerConfigurationProvider
@@ -260,29 +283,44 @@ One simple `theme` prop. Provide any subset — everything else keeps the built-
 </CookieBannerConfigurationProvider>
 ```
 
-## Your own classes and components (shadcn-style)
+### 2. CSS custom properties
 
-Every component accepts `className` plus per-part class props, and you can swap the default `Button`/`Switch` for your own components. `CookieBanner` renders the privacy-policy link only when you pass `policyUrl`. The settings dialog is a native `<dialog>` (top layer, focus trap, and Escape-to-close are built in); its dim/blur backdrop is styled by the package itself, and `overlayClassName` is applied to the click-to-close layer behind the panel.
+Override the variables globally or per theme. The built-in dark palette applies under a `.dark` **or** `[data-theme="dark"]` ancestor (Tailwind's class strategy and `next-themes` both work out of the box).
+
+```css
+:root {
+  --nsr-primary: #0ea5e9;
+  --nsr-radius: 0.5rem;        /* corner radius of cards and buttons */
+  --nsr-font: "Inter", sans-serif;
+  --nsr-z-banner: 90;
+  --nsr-z-dialog: 100;
+}
+.dark {
+  --nsr-surface: #0b1120;
+}
+```
+
+All variables: `--nsr-primary`, `--nsr-primary-text`, `--nsr-secondary`, `--nsr-secondary-text`, `--nsr-accent`, `--nsr-surface`, `--nsr-surface-muted`, `--nsr-text`, `--nsr-muted`, `--nsr-border`, `--nsr-ring`, `--nsr-switch-off`, `--nsr-backdrop`, `--nsr-radius`, `--nsr-font`, `--nsr-z-banner`, `--nsr-z-dialog`.
+
+### 3. Classes and your own components
+
+Every part carries a stable `nsr-*` class (`nsr-banner`, `nsr-banner__card`, `nsr-button--primary`, `nsr-switch`, `nsr-dialog__panel`, `nsr-category`, `nsr-item`, …), and every component accepts `className` plus per-part class props. Your classes are appended, so Tailwind utilities work fine. You can also swap the default `Button` / `Switch` for your own components via `components` (on the provider for everywhere, or on `CookieBanner` for the banner only).
 
 ```tsx
 <CookieBanner
-  className="rounded-none"
-  contentClassName="border-dashed"
+  contentClassName="rounded-none border-dashed"
   buttonClassName="w-full"
   components={{ Button: MyButton }}
-/>
-
-<CookieSettingsDialog
-  contentClassName="max-w-3xl"
-  categoryCardClassName="border-emerald-200"
-  buttonClassName="rounded-full"
+  dialogProps={{ contentClassName: "max-w-3xl", buttonClassName: "rounded-full" }}
 />
 ```
+
+`CookieBanner` renders the settings dialog for you; style it through `dialogProps` rather than rendering a second `CookieSettingsDialog`. The dialog is a native `<dialog>` (top layer, focus trap, Escape-to-close built in); its dim/blur backdrop is `--nsr-backdrop`, and `overlayClassName` is applied to the click-to-close layer behind the panel. `CookieBanner` renders the privacy-policy link only when you pass `policyUrl`.
 
 ## usePreferences
 
 ```tsx
-import { usePreferences } from "@local/non-spooky-react-cookie";
+import { usePreferences } from "non-spooky-react-cookie";
 
 function MyComponent() {
   const {
@@ -320,12 +358,16 @@ function MyComponent() {
 
 - `config` – consent categories (object map, keyed by category id)
 - `scripts` – third-party scripts to manage (object map, keyed by script id — see "Managing third-party scripts")
+- `language` – `"en"` (default), `"de"` or `"pl"`
+- `texts` – typed overrides of any built-in string
+- `theme` – color palette (see "Styling")
+- `components` – swap the default `Button` / `Switch`
 - `storageKey` – localStorage key and/or cookie name (default `"non-spooky-react-cookie"`)
 - `storage` – where the decision is persisted: `"localStorage"` (default), `"cookie"`, `"both"`, or a custom adapter (see "Storage")
 - `cookieOptions` – cookie attributes for `"cookie"` / `"both"` (see "Storage")
 - `initialPreferences` – decision read on the server, so the first render already matches (see "Storage")
 - `version` – bump this to ask visitors again (old stored state is ignored)
-- `googleConsentMode` – opt in to Google consent mode sync (see "Google tracker")
+- `googleConsentMode` – opt in to Google consent mode sync (see "Google consent mode")
 - `onDecision` – called whenever the visitor makes or changes their choice
 
 ## Storage
@@ -351,7 +393,7 @@ Cookie defaults: `Path=/`, `Max-Age=31536000` (365 days), `SameSite=Lax`, `Secur
 
 ### Custom adapter
 
-`storage` also accepts any object with `get`, `set` and `remove` working on strings. The library does the JSON parsing and validation, so the adapter never sees the state shape.
+`storage` also accepts any object with `get`, `set` and `remove` working on strings. The library does the JSON parsing and validation, so the adapter never sees the state shape. Keep the adapter reference stable (module-level constant or `useMemo`).
 
 ```tsx
 const memoryStorage: PreferencesStorage = {
@@ -367,12 +409,13 @@ The built-in adapters are exported too: `localStorageAdapter`, `createCookieStor
 
 ### Reading the decision on the server
 
-With `"cookie"` or `"both"`, a server can read the decision before rendering. `readPreferencesFromCookies` is a pure function (no `window`, no React): pass it the raw `Cookie` header or a cookie store with `get(name)` such as the one from Next.js `cookies()`. Hand the result to `initialPreferences` so the first render already knows the decision — no banner flash, and `usePreferences().loaded` is `true` from the start.
+With `"cookie"` or `"both"`, a server can read the decision before rendering. `readPreferencesFromCookies` lives in the **server entry** `non-spooky-react-cookie/server`, which has no React and no `window`, so it is safe in server components, route handlers, and middleware. Pass it the raw `Cookie` header or a cookie store with `get(name)` such as the one from Next.js `cookies()`. Hand the result to `initialPreferences` so the first render already knows the decision — no banner flash, and `usePreferences().loaded` is `true` from the start.
 
 ```tsx
 // app/layout.tsx (server component)
 import { cookies } from "next/headers";
-import { readPreferencesFromCookies } from "@local/non-spooky-react-cookie";
+import { readPreferencesFromCookies } from "non-spooky-react-cookie/server";
+import { ConsentProvider } from "./consent-provider"; // your "use client" wrapper
 
 export default async function RootLayout({ children }) {
   const initial = readPreferencesFromCookies(await cookies(), "my-site-cookies");
@@ -382,7 +425,7 @@ export default async function RootLayout({ children }) {
 
 Reading `cookies()` makes the route dynamic, so this needs a Node or edge runtime — it does not work with `output: "export"`. After mount the provider re-reads the client storage, which stays the source of truth.
 
-## Google tracker
+## Google consent mode
 
 If you use Google tags, set `googleConsentMode` on the provider. It then initializes consent mode with everything denied and updates it on every decision, based on the `analytics` and `marketing` categories. Without the prop the provider never touches `window.gtag` / `window.dataLayer`.
 
@@ -391,17 +434,35 @@ If you use Google tags, set `googleConsentMode` on the provider. It then initial
   {children}
 </CookieBannerConfigurationProvider>
 ```
- Because consent can be fine-grained, a category grants its signals when the category itself **or any of its items** is accepted — so accepting only "Google Ads" (Marketing master off) still grants `ad_storage`, matching the scripts that actually load.
+
+Because consent can be fine-grained, a category grants its signals when the category itself **or any of its items** is accepted — so accepting only "Google Ads" (Marketing master off) still grants `ad_storage`, matching the scripts that actually load.
 
 `updateGoogleTracker(state, categories?)` accepts the category list as an optional second argument for that item-level behavior; without it, it falls back to the plain `analytics` / `marketing` category ids.
 
-## Migrating from 0.x
+## Examples
 
-- `categories` (array) → `config` (object map, keyed by category id).
-- `scripts` (array of `{ id, ... }`) → **object map keyed by script id**. The `id` field is removed — the key is the id. `registerScript` is now `registerScript(id, def)`.
-- `AgreementFirewall` is **gone**. Move each script into the provider's `scripts` prop. `requireCategoryAcceptance` / `requireItemAcceptance` both map to `category`.
-- The `AgreementFirewallProps` type export is removed.
-- Google consent mode is opt-in: add `googleConsentMode` to the provider if you rely on it.
-- `CookieBanner` no longer defaults `policyUrl` to `/datenschutz`; pass it explicitly.
-- Withdrawal no longer deletes `window[<script id>]`; put that in the script's `cleanup`.
-- Stored state from the old `@local/privacy-consent` shape is no longer migrated.
+The [`examples/vite-playground`](./examples/README.md) app has one page per feature: basic banner, fine-grained items, consent-gated scripts, loading a library only after consent, the standalone loader, every storage strategy, a custom adapter, SSR initial preferences, languages, theming and dark mode, custom components, Google consent mode, version bumps, and programmatic control.
+
+```bash
+git clone https://github.com/KamilAdamski/non-spooky-react-cookie
+cd non-spooky-react-cookie
+pnpm install
+pnpm example
+```
+
+## Migrating from the private 0.x package
+
+- Package name: `@local/non-spooky-react-cookie` → `non-spooky-react-cookie`.
+- **Import the stylesheet** once: `import "non-spooky-react-cookie/styles.css"`. The provider no longer imports CSS itself, and Tailwind is no longer needed to render the components.
+- `readPreferencesFromCookies` and `CookieSource` moved to `non-spooky-react-cookie/server`.
+- Class names on the rendered elements changed from Tailwind utilities to `nsr-*` classes. Your `className` props still apply; anything that targeted the old utility classes needs updating.
+- Style the built-in settings dialog through `CookieBanner`'s new `dialogProps`.
+- Earlier 0.x changes still apply: `categories` array → `config` map; `scripts` array → object map keyed by id; `AgreementFirewall` removed in favor of the provider's `scripts` prop; Google consent mode is opt-in via `googleConsentMode`; `policyUrl` has no default.
+
+## Contributing and releasing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development setup and [MAINTAINING.md](./MAINTAINING.md) for how versions are cut and published.
+
+## License
+
+[MIT](./LICENSE) © Kamil Adamski

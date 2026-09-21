@@ -1,9 +1,9 @@
 "use client";
 
-import { usePreferences } from "./hooks/usePreferences";
 import { CookieSettingsDialog } from "./CookieSettingsDialog";
-import { Button, cn } from "./ui";
+import { usePreferences } from "./hooks/usePreferences";
 import type { CookieBannerProps } from "./types";
+import { Button, cn } from "./ui";
 
 export function CookieBanner({
   policyUrl,
@@ -14,6 +14,7 @@ export function CookieBanner({
   actionsClassName,
   buttonClassName,
   components,
+  dialogProps,
 }: Readonly<CookieBannerProps>) {
   const { acceptAll, openSettings, rejectAll, showBanner, texts, themeStyle } =
     usePreferences();
@@ -25,41 +26,20 @@ export function CookieBanner({
       {showBanner ? (
         <section
           aria-label={texts.banner.title}
-          className={cn(
-            "fixed inset-x-0 bottom-0 z-[90] border-t border-[var(--nsr-border)] bg-white/95 p-4 shadow-2xl backdrop-blur-md dark:bg-zinc-950/95",
-            className,
-          )}
+          className={cn("nsr-banner", className)}
           style={themeStyle}
         >
-          <div
-            className={cn(
-              "mx-auto flex max-w-6xl flex-col gap-4 rounded-2xl border border-[var(--nsr-border)] bg-[var(--nsr-surface)] p-5 shadow-xl lg:flex-row lg:items-center lg:justify-between",
-              contentClassName,
-            )}
-          >
-            <div className="max-w-3xl">
-              <h2
-                className={cn(
-                  "text-base font-bold text-[var(--nsr-text)]",
-                  titleClassName,
-                )}
-              >
+          <div className={cn("nsr-banner__card", contentClassName)}>
+            <div className="nsr-banner__text">
+              <h2 className={cn("nsr-banner__title", titleClassName)}>
                 {texts.banner.title}
               </h2>
-              <p
-                className={cn(
-                  "mt-2 text-sm leading-6 text-[var(--nsr-muted)]",
-                  descriptionClassName,
-                )}
-              >
+              <p className={cn("nsr-banner__description", descriptionClassName)}>
                 {texts.banner.description}
                 {policyUrl ? (
                   <>
                     {" "}
-                    <a
-                      className="font-semibold text-[var(--nsr-accent)] underline-offset-4 hover:underline"
-                      href={policyUrl}
-                    >
+                    <a className="nsr-banner__link" href={policyUrl}>
                       {texts.banner.policyLink}
                     </a>
                   </>
@@ -67,12 +47,7 @@ export function CookieBanner({
               </p>
             </div>
 
-            <div
-              className={cn(
-                "grid gap-2 sm:grid-cols-3 lg:min-w-[32rem]",
-                actionsClassName,
-              )}
-            >
+            <div className={cn("nsr-banner__actions", actionsClassName)}>
               <ButtonComponent
                 className={buttonClassName}
                 onClick={rejectAll}
@@ -101,7 +76,7 @@ export function CookieBanner({
           </div>
         </section>
       ) : null}
-      <CookieSettingsDialog />
+      <CookieSettingsDialog {...dialogProps} />
     </>
   );
 }

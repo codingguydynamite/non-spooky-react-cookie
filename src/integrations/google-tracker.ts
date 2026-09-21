@@ -21,6 +21,9 @@ function ensureGtag(): Window["gtag"] | null {
   window.gtag =
     window.gtag ??
     function gtag() {
+      // Google's own snippet pushes the `arguments` object, not an array;
+      // gtag.js relies on that exact shape when it replays the queue.
+      // biome-ignore lint/complexity/noArguments: required by gtag.js
       window.dataLayer?.push(arguments);
     };
 

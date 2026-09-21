@@ -74,10 +74,7 @@ export function writePreferences(
   }
 }
 
-export function removePreferences(
-  storage: PreferencesStorage,
-  storageKey: string,
-): void {
+export function removePreferences(storage: PreferencesStorage, storageKey: string): void {
   if (typeof window === "undefined") return;
 
   try {

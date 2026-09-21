@@ -1,0 +1,50 @@
+name: Release
+
+# Runs on every push to main.
+# - With pending changesets: opens/updates the "chore: release" PR that bumps
+#   the version and CHANGELOG.
+# - When that PR is merged: publishes to npm via trusted publishing (OIDC) and
+#   creates a GitHub release. No NPM_TOKEN is needed; see MAINTAINING.md.
+
+on:
+  push:
+    branches: [main]
+
+concurrency: release-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    name: Version or publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm >= 11.5.1.
+      - run: npm install -g npm@latest
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create release PR or publish
+        uses: changesets/action@v2
+        with:
+          publish: pnpm release
+          title: "chore: release"
+          commit: "chore: release"
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
