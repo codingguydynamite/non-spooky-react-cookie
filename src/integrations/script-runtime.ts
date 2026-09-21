@@ -3,9 +3,8 @@
  *
  * This is the single source of truth for the 4-state lifecycle
  * (`blocked | loading | loaded | error`) of every managed script.
- * Both the provider (consent-gated) and the standalone loader drive
- * this store, and `useConsentScript` subscribes to it via
- * `useSyncExternalStore`.
+ * The provider drives this store (consent-gated) and `useConsentScript`
+ * subscribes to it via `useSyncExternalStore`.
  *
  * The store is module-level (one per browser tab), keyed by script id.
  * It is intentionally framework-agnostic: no React imports here.

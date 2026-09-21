@@ -9,7 +9,6 @@ import { GoogleConsentModeSync } from "./GoogleConsentModeSync";
 import { LoadLibraryOnlyAfterConsent } from "./LoadLibraryOnlyAfterConsent";
 import { OnDecisionCallbackAndProgrammaticControl } from "./OnDecisionCallbackAndProgrammaticControl";
 import { SsrInitialPreferencesNoBannerFlash } from "./SsrInitialPreferencesNoBannerFlash";
-import { StandaloneScriptLoaderWithoutProvider } from "./StandaloneScriptLoaderWithoutProvider";
 import { StorageStrategiesLocalStorageCookieBoth } from "./StorageStrategiesLocalStorageCookieBoth";
 import { ThemeColorsAndDarkMode } from "./ThemeColorsAndDarkMode";
 import { VersionBumpAsksVisitorsAgain } from "./VersionBumpAsksVisitorsAgain";
@@ -54,14 +53,6 @@ export const scenarios: Scenario[] = [
       "A component that renders a placeholder while blocked, a skeleton while loading, and the real thing once the script is in.",
     file: "LoadLibraryOnlyAfterConsent.tsx",
     Component: LoadLibraryOnlyAfterConsent,
-  },
-  {
-    id: "standalone",
-    title: "Standalone script loader (no provider)",
-    summary:
-      "registerScript + useConsentScript + loadConsentScript outside any provider: a plain reactive script loader without a consent gate.",
-    file: "StandaloneScriptLoaderWithoutProvider.tsx",
-    Component: StandaloneScriptLoaderWithoutProvider,
   },
   {
     id: "storage",

@@ -2,7 +2,7 @@
 
 ## Done
 
-- [x] Script loading — consent-gated load/unload primitives (`script-loader.ts`, `script-registry.ts`, `script-runtime.ts`, `useConsentScript`, `loadConsentScript`)
+- [x] Script loading — consent-gated load/unload via the provider `scripts` prop (`script-loader.ts`, `script-runtime.ts`, `useConsentScript`)
 - [x] Package structure + README docs
 - [x] **Item consent gates independently of its parent category** — selecting just an item (e.g. Meta Pixel) loads its script; the category switch is a convenience toggle, not a hard gate.
 - [x] **Ready-made public types** — `ConsentScripts`, `TextOverrides`.
@@ -13,13 +13,16 @@
   - Plain CSS: all Tailwind utility classes replaced by `nsr-*` classes in `src/styles.css`. No Tailwind needed by consumers.
   - New `non-spooky-react-cookie/server` entry; the main barrel is `"use client"`.
   - `dialogProps` on `CookieBanner`.
-  - Biome (lint + format), Vitest unit tests for storage / texts / registry, pnpm workspace.
-  - `examples/vite-playground` with 14 scenarios, dev alias to `src/`, build against `dist/`.
+  - Biome (lint + format), Vitest unit tests for storage / texts, pnpm workspace.
+  - `examples/vite-playground` with 13 scenarios, dev alias to `src/`, build against `dist/`.
   - GitHub Actions: `ci.yml` (lint, typecheck, test, build, package check, playground build) and `release.yml` (Changesets + npm trusted publishing).
   - Docs: README rewritten, `MAINTAINING.md`, `CONTRIBUTING.md`, `examples/README.md`.
 
 ## Next
-
+- [ ] Sprawdzić czy możemy dodac taki custom latający widged do cookiesów (najlepiej żeby dało się go customizować - np. latające cisteczko, rakieta etc)
+- [ ] sprawdzić jakie mamy możliwości modyfikacji głównego cookie banera na dole, np. żeby był na cały ekran i żeby blokował np. ekran ?
+- [ ] sprawdzić ( dostarczyć ) jakąs funkcję albo zobaczyć jak skorelowac to z pluginem I dont care about cookies - żeby odrzucało wszystko.
+- [ ] Loader i runtime store nie mają żadnych testów, a to teraz jedyna ścieżka ładowania. Test providera pod jsdom z Testing Library jest już w backlogu jako osobna pozycja i po tych zmianach jest ważniejszy niż wcześniej.
 - [ ] Click through every playground scenario in a browser (see `examples/README.md`); note visual issues below.
 - [ ] Do the one-time release setup from `MAINTAINING.md` §4: create the GitHub repo, enable "Actions may create PRs", first manual `pnpm release`, configure the npm trusted publisher.
 - [ ] Switch `handwerk-portfolio` from `file:./packages/...` to the published package and add `import "non-spooky-react-cookie/styles.css"`; delete the copied `packages/` folder there.

@@ -1,9 +1,7 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useContext, useSyncExternalStore } from "react";
 import { CookieBannerContext } from "../CookieBannerConfigurationProvider";
-import { ensureScript } from "../integrations/script-loader";
-import { getRegisteredScript } from "../integrations/script-registry";
 import type { ScriptStatus } from "../integrations/script-runtime";
 import {
   getScriptError,
@@ -13,10 +11,11 @@ import {
 
 export type UseConsentScriptResult = {
   /**
-   * - `blocked` — consent for the script's category is not granted (provider mode).
+   * - `blocked` — consent for the script's category is not granted.
    * - `loading` — consent granted, script is being fetched.
    * - `loaded` — the `<script>` is in the DOM and finished loading.
-   * - `error` — the script failed to load, or it was never declared/registered.
+   * - `error` — the script failed to load, is not declared in the provider's
+   *   `scripts` map, or the hook is rendered outside a provider.
    */
   status: ScriptStatus;
   /** Present when `status === "error"`. */
@@ -24,20 +23,18 @@ export type UseConsentScriptResult = {
 };
 
 /**
- * Reactive, consent-aware load status for a registered script.
+ * Reactive, consent-gated load status for a script declared in the
+ * provider's `scripts` map.
  *
- * - **Inside a `CookieBannerConfigurationProvider`**: the status is gated on
- *   the script's `category`. Denied → `blocked`; granted → the provider drives
- *   `loading` → `loaded`/`error`.
- * - **Outside a provider** (standalone): no consent gate. The script is loaded
- *   on mount from the definition store. An unregistered id → `error`.
+ * The status is gated on the script's `category`: denied → `blocked`;
+ * granted → the provider drives `loading` → `loaded`/`error`. The hook never
+ * loads anything itself — the provider is the single enforcement point.
  *
- * The script's `<script>` element is created exactly once (deduped by id),
- * so many components can call this for the same id safely.
+ * Must be rendered inside a `CookieBannerConfigurationProvider`.
  */
 export function useConsentScript(id: string): UseConsentScriptResult {
   const context = useContext(CookieBannerContext);
-  const def = context ? context.scripts[id] : getRegisteredScript(id);
+  const def = context?.scripts[id];
 
   // Two subscriptions on purpose: the store mutates entries in place, so a
   // single object snapshot would never look "changed" to React.
@@ -56,28 +53,30 @@ export function useConsentScript(id: string): UseConsentScriptResult {
     () => undefined,
   );
 
-  // Standalone mode only: no consent gate, so load on mount. Provider mode
-  // leaves loading to the provider's enforcement effect.
-  useEffect(() => {
-    if (!context && def) ensureScript(id, def);
-  }, [context, def, id]);
-
-  if (!def) {
-    const hint = context
-      ? "script is not declared in the provider's `scripts` map."
-      : `script is not registered. Call registerScript("${id}", {...}) or use a CookieBannerConfigurationProvider.`;
+  if (!context) {
     return {
       status: "error",
-      error: new Error(`useConsentScript("${id}"): ${hint}`),
+      error: new Error(
+        `useConsentScript("${id}") must be used within a CookieBannerConfigurationProvider.`,
+      ),
     };
   }
 
-  if (context && !context.isAllowed(def.category)) {
+  if (!def) {
+    return {
+      status: "error",
+      error: new Error(
+        `useConsentScript("${id}"): script is not declared in the provider's \`scripts\` map.`,
+      ),
+    };
+  }
+
+  if (!context.isAllowed(def.category)) {
     return { status: "blocked" };
   }
 
-  // Consent granted (or no gate). A not-yet-started script is presented as
-  // `loading` to avoid a `blocked` flash before the load effect runs.
+  // Consent granted. A not-yet-started script is presented as `loading` to
+  // avoid a `blocked` flash before the provider's load effect runs.
   const status = runtimeStatus === "blocked" ? "loading" : runtimeStatus;
   return { status, error: status === "error" ? runtimeError : undefined };
 }

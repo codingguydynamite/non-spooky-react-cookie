@@ -1,18 +1,10 @@
+/**
+ * Internal DOM + status primitives used by the provider to load and remove
+ * consent-gated scripts. Not exported — the provider is the single place
+ * that ever inserts a `<script>` element.
+ */
 import type { ConsentScript } from "../types";
-import { getRegisteredScript } from "./script-registry";
-import {
-  getScriptError,
-  getScriptStatus,
-  setScriptStatus,
-  subscribeScript,
-} from "./script-runtime";
-
-/** Normalizes a stored (unknown) error into an `Error` for rejection. */
-function toError(value: unknown, fallback: string): Error {
-  if (value instanceof Error) return value;
-  if (typeof value === "string") return new Error(value);
-  return new Error(fallback);
-}
+import { getScriptStatus, setScriptStatus } from "./script-runtime";
 
 /** Runs a consumer callback; its errors must never break consent enforcement. */
 function safeCall(fn?: () => void): void {
@@ -80,7 +72,7 @@ export function loadScript({
 }
 
 /**
- * Removes the script element registered under `id` and runs the optional
+ * Removes the script element with `id` and runs the optional
  * `cleanup` function.
  *
  * Caveat: this does NOT undo cookies or network requests the script
@@ -146,63 +138,4 @@ export function removeScript(id: string, cleanup?: () => void): void {
 
   unloadScript(id, cleanup);
   setScriptStatus(id, "blocked");
-}
-
-/**
- * Imperative, Promise-based loader for non-hook call sites.
- *
- * - `loaded` → resolves immediately.
- * - `loading` → awaits the in-flight element, then resolves/rejects.
- * - `error` → rejects with the stored error.
- * - `blocked` → starts loading now (no consent gate), then settles.
- * - unregistered id → rejects with a "not registered" error.
- * - SSR → rejects.
- */
-export function loadConsentScript(id: string): Promise<void> {
-  if (typeof document === "undefined") {
-    return Promise.reject(
-      new Error(`loadConsentScript("${id}") requires a DOM (client-side).`),
-    );
-  }
-
-  const def = getRegisteredScript(id);
-  if (!def) {
-    return Promise.reject(
-      new Error(
-        `loadConsentScript("${id}"): script is not registered. Declare it in the provider's \`scripts\` map or call registerScript("${id}", {...}) first.`,
-      ),
-    );
-  }
-
-  const failure = () => toError(getScriptError(id), `Script "${id}" failed to load.`);
-
-  if (getScriptStatus(id) === "blocked") ensureScript(id, def);
-
-  // Inline scripts settle synchronously inside `ensureScript`, so the
-  // status may already be final here.
-  const status = getScriptStatus(id);
-  if (status === "loaded") return Promise.resolve();
-  if (status === "error") return Promise.reject(failure());
-
-  if (!findScriptElement(id)) {
-    return Promise.reject(
-      new Error(`loadConsentScript("${id}"): script element not found.`),
-    );
-  }
-
-  // The element's `load`/`error` events fire asynchronously, so a
-  // subscription set up here (synchronously) will always observe the
-  // transition to `loaded`/`error`.
-  return new Promise<void>((resolve, reject) => {
-    const unsubscribe = subscribeScript(id, () => {
-      const current = getScriptStatus(id);
-      if (current === "loaded") {
-        unsubscribe();
-        resolve();
-      } else if (current === "error") {
-        unsubscribe();
-        reject(failure());
-      }
-    });
-  });
 }

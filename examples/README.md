@@ -19,7 +19,6 @@ Every scenario lives in one file under `vite-playground/src/scenarios/` and uses
 | `CustomCategoriesWithFineGrainedItems.tsx` | Your own categories with items; items are accepted independently of their parent |
 | `ConsentGatedThirdPartyScripts.tsx` | External and inline scripts that load/unload with consent, `cleanup`, live status per script |
 | `LoadLibraryOnlyAfterConsent.tsx` | A component that waits for a script (`useConsentScript`) and renders placeholder → skeleton → real UI |
-| `StandaloneScriptLoaderWithoutProvider.tsx` | `registerScript`, `useConsentScript` and `loadConsentScript` with no provider at all |
 | `StorageStrategiesLocalStorageCookieBoth.tsx` | `storage="localStorage" | "cookie" | "both"` and `cookieOptions`, with the raw payload shown |
 | `CustomStorageAdapterSessionStorage.tsx` | A custom `PreferencesStorage` adapter |
 | `SsrInitialPreferencesNoBannerFlash.tsx` | `readPreferencesFromCookies` from the `/server` entry + `initialPreferences` |

@@ -4,7 +4,6 @@ import type * as React from "react";
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { initGoogleTracker, updateGoogleTracker } from "./integrations/google-tracker";
 import { ensureScript, removeScript } from "./integrations/script-loader";
-import { registerScript, unregisterScript } from "./integrations/script-registry";
 import { resolveTexts } from "./resolve-texts";
 import {
   DEFAULT_STORAGE_KEY,
@@ -176,20 +175,13 @@ export function CookieBannerConfigurationProvider({
     setLoaded(true);
   }, [categories, googleConsentMode, storageKey, store, syncGoogle, version]);
 
-  // Register the declared scripts in the definition store; on unmount (or a
-  // new `scripts` map) unload and unregister exactly those — the registry
-  // may also hold scripts of other providers or standalone consumers.
+  // On unmount (or a new `scripts` map) unload exactly the declared scripts.
   useEffect(() => {
     const entries = Object.entries(scripts ?? {});
-    for (const [id, def] of entries) {
-      registerScript(id, def);
-    }
-
     return () => {
-      entries.forEach(([id, def]) => {
+      for (const [id, def] of entries) {
         removeScript(id, def.cleanup);
-        unregisterScript(id);
-      });
+      }
     };
   }, [scripts]);
 

@@ -11,21 +11,6 @@ export {
   initGoogleTracker,
   updateGoogleTracker,
 } from "./integrations/google-tracker";
-export type { LoadScriptOptions } from "./integrations/script-loader";
-export {
-  ensureScript,
-  loadConsentScript,
-  loadScript,
-  removeScript,
-  unloadScript,
-} from "./integrations/script-loader";
-export {
-  clearRegistry,
-  getRegisteredScript,
-  getRegisteredScripts,
-  registerScript,
-  unregisterScript,
-} from "./integrations/script-registry";
 export type { ScriptStatus } from "./integrations/script-runtime";
 export {
   createBothStorage,

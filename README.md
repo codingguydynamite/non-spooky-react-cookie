@@ -55,10 +55,7 @@ In the Next.js App Router put this in a client component (`"use client"`) and re
 - `CookieSettingsLink` – a small link (e.g. in a footer) that opens the cookie settings dialog
 - `Button` / `Switch` / `Collapsible` – the default primitives, exported so you can wrap or reuse them
 - `usePreferences` – the hook for consent state and actions
-- `useConsentScript` – **reactive** load status (`blocked | loading | loaded | error`) for a script; consent-gated inside the provider, standalone outside it
-- `loadConsentScript` – imperative `Promise`-based loader for non-hook call sites
-- `registerScript` / `getRegisteredScript` / `getRegisteredScripts` / `unregisterScript` / `clearRegistry` – the script definition store (used internally by the provider, exposed for power users)
-- `ensureScript` / `removeScript` / `loadScript` / `unloadScript` – the load/remove primitives
+- `useConsentScript` – **reactive**, consent-gated load status (`blocked | loading | loaded | error`) for a script declared in the provider
 - `initGoogleTracker` / `updateGoogleTracker` – Google consent mode sync
 - `localStorageAdapter` / `createCookieStorage` / `createBothStorage` – the built-in storage adapters
 - `non-spooky-react-cookie/server` → `readPreferencesFromCookies` – read the decision on the server (no React, no `window`)
@@ -156,22 +153,23 @@ When a category (or item) flips from accepted to rejected, the provider:
 
 **Caveat:** none of this undoes cookies the script already set or network requests it already fired. For real teardown (e.g. calling `fbq('shutdown')`), use the `cleanup` hook.
 
-### The registry (advanced)
+### Composing scripts from several modules
 
-Under the hood the provider registers every script from its `scripts` prop into the definition store and then syncs it against the current consent state.
+The `scripts` prop is the **only** place scripts are declared — there is no side channel to register one from elsewhere. If an integration lives in its own module, export its part of the map and spread it in:
 
-If you need to register a script imperatively (e.g. from a custom integration), use:
+```tsx
+// integrations/hotjar.ts
+import type { ConsentScripts } from "non-spooky-react-cookie";
 
-```ts
-import { registerScript } from "non-spooky-react-cookie";
+export const hotjarScripts: ConsentScripts = {
+  hotjar: { category: "analytics", src: "https://static.hotjar.com/c/hotjar-XXXX.js" },
+};
 
-registerScript("my-tracker", {
-  category: "analytics",
-  src: "https://example.com/tracker.js",
-});
+// app root
+<CookieBannerConfigurationProvider scripts={{ ...hotjarScripts, ...metaScripts }} />
 ```
 
-**Note:** the provider only manages the scripts passed via its `scripts` prop — it does **not** read back from the registry on its own. So a script registered this way is picked up by `useConsentScript` (standalone, no provider) and `loadConsentScript`, but it is **not** consent-gated or unloaded by the provider. To have the provider load/unload a script with the visitor's choice, declare it in the provider's `scripts` prop instead. On unmount the provider removes and unregisters **only the scripts from its own `scripts` prop** — standalone registrations in the registry are left alone.
+Keep the object reference stable (module-level constant or `useMemo`); a new `scripts` object on every render unloads and reloads the scripts.
 
 ## useConsentScript (reactive load status)
 
@@ -204,35 +202,12 @@ function GoogleMap({ locations }: { locations: Location[] }) {
 
 | Status | Meaning |
 | --- | --- |
-| `blocked` | Consent for the script's category is not granted (provider mode). |
+| `blocked` | Consent for the script's category is not granted. |
 | `loading` | Consent granted, the script is being fetched. |
 | `loaded` | The `<script>` is in the DOM and finished loading. |
-| `error` | The script failed to load — or the id was never declared (provider: not in the `scripts` map; standalone: not in the definition store). |
+| `error` | The script failed to load, the id is not in the provider's `scripts` map, or the hook is rendered outside a provider. |
 
-**Inside a `CookieBannerConfigurationProvider`** the status is gated on the script's `category`. **Outside a provider** (standalone) there is no consent gate — the script is loaded on mount from the definition store, so `useConsentScript` also works as a plain consent-less loader. The `<script>` element is created exactly once (deduped by id), so many components can call this for the same id safely.
-
-## loadConsentScript (imperative)
-
-For non-hook call sites (an event handler, a utility, a test):
-
-```ts
-import { loadConsentScript } from "non-spooky-react-cookie";
-
-await loadConsentScript("google-maps"); // resolves once the script is loaded
-```
-
-- Resolves immediately if already `loaded`.
-- Awaits an in-flight `loading`.
-- If `blocked` (never started yet), it **starts loading now** — the imperative path has no consent gate, it just resolves/rejects once the element settles.
-- Rejects if the id was never registered, on the server (SSR), if the script failed (`error`), or if the script element can't be found in the DOM.
-
-> **Tip:** because there's no consent gate here, check `useConsentScript` / `isAllowed` first if you only want to load a script the visitor has agreed to.
-
-## ensureScript / removeScript
-
-- `ensureScript(id, def)` — consent-aware load; drives the status store (`loading` → `loaded`/`error`) and runs `onLoad`/`onError`.
-- `removeScript(id, cleanup?)` — removes the element, runs `cleanup`, resets status to `blocked`.
-- `loadScript` / `unloadScript` — the low-level DOM helpers (no status tracking).
+The status is gated on the script's `category`; the hook itself never loads anything — the provider does, so it must be rendered inside a `CookieBannerConfigurationProvider`. The `<script>` element is created exactly once (deduped by id), so many components can call this for the same id safely.
 
 ## Your own texts (fully typed)
 
@@ -441,7 +416,7 @@ Because consent can be fine-grained, a category grants its signals when the cate
 
 ## Examples
 
-The [`examples/vite-playground`](./examples/README.md) app has one page per feature: basic banner, fine-grained items, consent-gated scripts, loading a library only after consent, the standalone loader, every storage strategy, a custom adapter, SSR initial preferences, languages, theming and dark mode, custom components, Google consent mode, version bumps, and programmatic control.
+The [`examples/vite-playground`](./examples/README.md) app has one page per feature: basic banner, fine-grained items, consent-gated scripts, loading a library only after consent, every storage strategy, a custom adapter, SSR initial preferences, languages, theming and dark mode, custom components, Google consent mode, version bumps, and programmatic control.
 
 ```bash
 git clone https://github.com/KamilAdamski/non-spooky-react-cookie
