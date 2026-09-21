@@ -316,6 +316,23 @@ function MyComponent() {
 }
 ```
 
+## window.justDont()
+
+As soon as the provider mounts, a single global function is available from the DevTools console — no extra prop, no script tag, no page reload:
+
+```js
+window.justDont(); // rejects every optional category
+```
+
+It does exactly what the "Reject all" button does: required categories stay on, optional ones (and their items) are turned off, the banner closes, consent-gated scripts are unloaded (with their `cleanup`), the decision is persisted, and `onDecision` / Google consent mode react. So an "I don't care about cookies"-style browser extension needs only:
+
+```js
+// content script, run in the page context
+() => window.justDont?.()
+```
+
+The provider registers the function on mount and removes it on unmount. If `window.justDont` already exists (another banner, your own code) the provider logs a warning and takes over the slot. Opt out with `windowJustDont={false}` on the provider.
+
 ## Provider options
 
 ```tsx
@@ -343,6 +360,7 @@ function MyComponent() {
 - `initialPreferences` – decision read on the server, so the first render already matches (see "Storage")
 - `version` – bump this to ask visitors again (old stored state is ignored)
 - `googleConsentMode` – opt in to Google consent mode sync (see "Google consent mode")
+- `windowJustDont` – register the `window.justDont()` global (default `true`; set `false` to opt out — see "window.justDont()")
 - `onDecision` – called whenever the visitor makes or changes their choice
 
 ## Storage

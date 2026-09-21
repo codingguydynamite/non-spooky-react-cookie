@@ -108,6 +108,7 @@ export function CookieBannerConfigurationProvider({
   initialPreferences,
   version = DEFAULT_VERSION,
   googleConsentMode = false,
+  windowJustDont = true,
   onDecision,
 }: Readonly<CookieBannerConfigurationProviderProps>) {
   // Keyed on the serialized options so an inline `cookieOptions={{ ... }}`
@@ -315,6 +316,30 @@ export function CookieBannerConfigurationProvider({
       themeStyle,
     ],
   );
+
+  // One global function, `window.justDont()`, that rejects all optional
+  // categories — aimed at console snippets and "I don't care about
+  // cookies"-style browser extensions. No opt-in needed: it is registered
+  // as soon as the provider mounts, and re-registered whenever `rejectAll`
+  // changes so the global never holds a stale closure.
+  useEffect(() => {
+    if (!windowJustDont || typeof window === "undefined") return;
+
+    const w = window as unknown as { justDont?: () => void };
+    if (typeof w.justDont === "function") {
+      console.warn(
+        "[non-spooky-react-cookie] window.justDont already exists; the " +
+          "cookie banner will overwrite it.",
+      );
+    }
+
+    w.justDont = rejectAll;
+    return () => {
+      // Only clear the slot when we still own it, so an unmount never
+      // removes a global a later-mounted provider registered.
+      if (w.justDont === rejectAll) delete w.justDont;
+    };
+  }, [rejectAll, windowJustDont]);
 
   return (
     <CookieBannerContext.Provider value={value}>{children}</CookieBannerContext.Provider>

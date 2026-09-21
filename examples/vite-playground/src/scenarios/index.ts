@@ -6,6 +6,7 @@ import { CustomButtonAndSwitchComponents } from "./CustomButtonAndSwitchComponen
 import { CustomCategoriesWithFineGrainedItems } from "./CustomCategoriesWithFineGrainedItems";
 import { CustomStorageAdapterSessionStorage } from "./CustomStorageAdapterSessionStorage";
 import { GoogleConsentModeSync } from "./GoogleConsentModeSync";
+import { JustDontGlobal } from "./JustDontGlobal";
 import { LoadLibraryOnlyAfterConsent } from "./LoadLibraryOnlyAfterConsent";
 import { OnDecisionCallbackAndProgrammaticControl } from "./OnDecisionCallbackAndProgrammaticControl";
 import { SsrInitialPreferencesNoBannerFlash } from "./SsrInitialPreferencesNoBannerFlash";
@@ -116,6 +117,14 @@ export const scenarios: Scenario[] = [
       "Bump the version prop and the stored decision is ignored: the banner comes back.",
     file: "VersionBumpAsksVisitorsAgain.tsx",
     Component: VersionBumpAsksVisitorsAgain,
+  },
+  {
+    id: "just-dont",
+    title: "window.justDont() — reject all from the console",
+    summary:
+      "The provider registers window.justDont() automatically: one global call rejects every optional category, for console snippets and 'I don't care about cookies'-style extensions.",
+    file: "JustDontGlobal.tsx",
+    Component: JustDontGlobal,
   },
   {
     id: "programmatic",

@@ -306,6 +306,14 @@ export type CookieBannerConfigurationProviderProps = {
    * so enable it only when you load Google tags. Default: `false`.
    */
   googleConsentMode?: boolean;
+  /**
+   * Register `window.justDont()`: a global that rejects all optional
+   * categories (required ones stay on, the banner closes, managed scripts
+   * unload) — handy for console snippets and "I don't care about cookies"-
+   * style browser extensions. Client-only. Enabled by default; pass
+   * `false` to opt out. The last mounted provider owns the global.
+   */
+  windowJustDont?: boolean;
   /** Called whenever the visitor makes or changes their choice. */
   onDecision?: (state: PreferencesState) => void;
 };
