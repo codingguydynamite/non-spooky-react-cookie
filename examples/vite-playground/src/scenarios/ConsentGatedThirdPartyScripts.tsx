@@ -1,6 +1,7 @@
 import type { ConsentConfig, ConsentScripts } from "non-spooky-react-cookie";
 import { CookieBanner, CookieBannerConfigurationProvider } from "non-spooky-react-cookie";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 import { ScriptStatusRow } from "../components/StatusBadge";
 
 const config: ConsentConfig = {
@@ -71,8 +72,10 @@ const scripts: ConsentScripts = {
 };
 
 export function ConsentGatedThirdPartyScripts() {
+  const respectGpc = useRespectGpc();
   return (
     <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
       storageKey="pg-scripts"
       config={config}
       scripts={scripts}

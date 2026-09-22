@@ -1,6 +1,7 @@
 import { CookieBanner, CookieBannerConfigurationProvider } from "non-spooky-react-cookie";
 import { useState } from "react";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 import { StoredValue } from "../components/StoredValue";
 
 const STORAGE_KEY = "pg-version";
@@ -11,6 +12,7 @@ const STORAGE_KEY = "pg-version";
  * a different version is ignored, not deleted, until the next decision.
  */
 export function VersionBumpAsksVisitorsAgain() {
+  const respectGpc = useRespectGpc();
   const [version, setVersion] = useState("2026-01-01");
 
   return (
@@ -42,7 +44,11 @@ export function VersionBumpAsksVisitorsAgain() {
         </p>
       </div>
 
-      <CookieBannerConfigurationProvider storageKey={STORAGE_KEY} version={version}>
+      <CookieBannerConfigurationProvider
+        respectGlobalPrivacyControl={respectGpc}
+        storageKey={STORAGE_KEY}
+        version={version}
+      >
         <ConsentToolbar />
         <StoredValue storageKey={STORAGE_KEY} />
         <CookieBanner />

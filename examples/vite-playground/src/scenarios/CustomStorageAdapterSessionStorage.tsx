@@ -1,6 +1,7 @@
 import type { PreferencesStorage } from "non-spooky-react-cookie";
 import { CookieBanner, CookieBannerConfigurationProvider } from "non-spooky-react-cookie";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 import { StoredValue } from "../components/StoredValue";
 
 const STORAGE_KEY = "pg-session";
@@ -18,8 +19,10 @@ const sessionStorageAdapter: PreferencesStorage = {
 };
 
 export function CustomStorageAdapterSessionStorage() {
+  const respectGpc = useRespectGpc();
   return (
     <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
       storageKey={STORAGE_KEY}
       storage={sessionStorageAdapter}
     >

@@ -4,6 +4,7 @@ import {
   CookieSettingsLink,
 } from "non-spooky-react-cookie";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 /**
  * The smallest possible setup. No config: the provider falls back to the
@@ -11,8 +12,12 @@ import { ConsentToolbar } from "../components/ConsentToolbar";
  * English texts. `policyUrl` is optional; without it no link is rendered.
  */
 export function BasicBannerWithDefaults() {
+  const respectGpc = useRespectGpc();
   return (
-    <CookieBannerConfigurationProvider storageKey="pg-basic">
+    <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
+      storageKey="pg-basic"
+    >
       <div className="pg-card">
         <h3>What to try</h3>
         <p>

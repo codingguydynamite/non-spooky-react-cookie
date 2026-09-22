@@ -15,6 +15,7 @@ export type { ScriptStatus } from "./integrations/script-runtime";
 export {
   createBothStorage,
   createCookieStorage,
+  DEFAULT_STORAGE_KEY,
   localStorageAdapter,
 } from "./storage";
 export type {

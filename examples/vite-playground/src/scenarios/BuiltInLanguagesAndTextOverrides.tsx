@@ -6,6 +6,7 @@ import {
 } from "non-spooky-react-cookie";
 import { useState } from "react";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 const languages = ["en", "de", "pl"] as const;
 
@@ -26,11 +27,13 @@ const overrides: TextOverrides = {
 };
 
 export function BuiltInLanguagesAndTextOverrides() {
+  const respectGpc = useRespectGpc();
   const [language, setLanguage] = useState<(typeof languages)[number]>("en");
   const [override, setOverride] = useState(false);
 
   return (
     <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
       storageKey="pg-languages"
       language={language}
       texts={override ? overrides : undefined}

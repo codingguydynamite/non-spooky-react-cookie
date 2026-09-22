@@ -27,4 +27,6 @@ Every scenario lives in one file under `vite-playground/src/scenarios/` and uses
 | `CustomButtonAndSwitchComponents.tsx` | Swapping `Button` / `Switch` via `components`, plus `className` props |
 | `GoogleConsentModeSync.tsx` | `googleConsentMode` with a live `dataLayer` log |
 | `VersionBumpAsksVisitorsAgain.tsx` | Bumping `version` to re-ask visitors |
+| `JustDontGlobal.tsx` | `window.justDont()` — the global the provider registers automatically; reject all from the console or an extension |
+| `GlobalPrivacyControl.tsx` | `respectGlobalPrivacyControl` — the browser's GPC signal as "Reject all", with a way to simulate the signal |
 | `OnDecisionCallbackAndProgrammaticControl.tsx` | `onDecision` and every `usePreferences` action |

@@ -306,6 +306,27 @@ export type CookieBannerConfigurationProviderProps = {
    * so enable it only when you load Google tags. Default: `false`.
    */
   googleConsentMode?: boolean;
+  /**
+   * Register `window.justDont()`: a global that rejects all optional
+   * categories (required ones stay on, the banner closes, managed scripts
+   * unload) — handy for console snippets and "I don't care about cookies"-
+   * style browser extensions. Client-only. Enabled by default; pass
+   * `false` to opt out. The last mounted provider owns the global.
+   */
+  windowJustDont?: boolean;
+  /**
+   * Honor the browser's Global Privacy Control signal
+   * (`navigator.globalPrivacyControl === true`, sent as `Sec-GPC: 1`). When
+   * a visitor with the signal on has no stored decision for the current
+   * `version`, the provider behaves as if they clicked "Reject all": required
+   * categories stay on, optional ones stay off, the banner never shows and
+   * `onDecision` fires. The decision is not persisted, because the signal is
+   * live: turning it off brings the banner back. A decision the visitor
+   * already made on this site always wins over the signal, and they can
+   * still opt in through the settings dialog. Enabled by default; pass
+   * `false` to opt out.
+   */
+  respectGlobalPrivacyControl?: boolean;
   /** Called whenever the visitor makes or changes their choice. */
   onDecision?: (state: PreferencesState) => void;
 };
@@ -314,6 +335,12 @@ export type CookieBannerContextValue = {
   loaded: boolean;
   hasDecision: boolean;
   showBanner: boolean;
+  /**
+   * `true` when `respectGlobalPrivacyControl` is on and the browser sent an
+   * active Global Privacy Control signal for this page load. Use it to tell
+   * the visitor their browser setting was honored.
+   */
+  globalPrivacyControl: boolean;
   settingsOpen: boolean;
   preferences: PreferencesState;
   texts: Texts;

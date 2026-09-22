@@ -2,6 +2,7 @@ import type { StorageKind } from "non-spooky-react-cookie";
 import { CookieBanner, CookieBannerConfigurationProvider } from "non-spooky-react-cookie";
 import { useState } from "react";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 import { StoredValue } from "../components/StoredValue";
 
 const STORAGE_KEY = "pg-storage";
@@ -22,6 +23,7 @@ const kinds: Array<{ kind: StorageKind; hint: string }> = [
  * next decision is written to both places.
  */
 export function StorageStrategiesLocalStorageCookieBoth() {
+  const respectGpc = useRespectGpc();
   const [kind, setKind] = useState<StorageKind>("localStorage");
 
   return (
@@ -44,6 +46,7 @@ export function StorageStrategiesLocalStorageCookieBoth() {
 
       {/* key remounts the provider so it re-reads from the new storage */}
       <CookieBannerConfigurationProvider
+        respectGlobalPrivacyControl={respectGpc}
         key={kind}
         storageKey={STORAGE_KEY}
         storage={kind}
