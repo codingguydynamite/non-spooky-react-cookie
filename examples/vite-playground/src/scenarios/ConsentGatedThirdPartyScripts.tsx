@@ -64,12 +64,18 @@ const scripts: ConsentScripts = {
   // the same id would lose the getElementById lookup to the script tag.
   "demo-analytics": {
     category: "analytics",
-    children: drawCardScript("demo-analytics-target", "Analytics script ran and drew this."),
+    children: drawCardScript(
+      "demo-analytics-target",
+      "Analytics script ran and drew this.",
+    ),
     cleanup: () => clearCard("demo-analytics-target"),
   },
   "demo-marketing": {
     category: "marketing",
-    children: drawCardScript("demo-marketing-target", "Marketing script ran and drew this."),
+    children: drawCardScript(
+      "demo-marketing-target",
+      "Marketing script ran and drew this.",
+    ),
     cleanup: () => clearCard("demo-marketing-target"),
   },
 };
