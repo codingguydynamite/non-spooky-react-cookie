@@ -1,7 +1,10 @@
 "use client";
 
 export { CookieBanner } from "./CookieBanner";
-export { CookieBannerConfigurationProvider } from "./CookieBannerConfigurationProvider";
+export {
+  CookieBannerConfigurationProvider,
+  THEME_ATTRIBUTE,
+} from "./CookieBannerConfigurationProvider";
 export { CookieSettingsDialog } from "./CookieSettingsDialog";
 export { CookieSettingsLink } from "./CookieSettingsLink";
 export type { UseConsentScriptResult } from "./hooks/useConsentScript";

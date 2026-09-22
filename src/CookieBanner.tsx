@@ -16,10 +16,17 @@ export function CookieBanner({
   components,
   dialogProps,
 }: Readonly<CookieBannerProps>) {
-  const { acceptAll, openSettings, rejectAll, showBanner, texts, themeStyle } =
-    usePreferences();
+  const {
+    acceptAll,
+    components: providerComponents,
+    openSettings,
+    rejectAll,
+    showBanner,
+    texts,
+    themeAttributes,
+  } = usePreferences();
 
-  const ButtonComponent = components?.Button ?? Button;
+  const ButtonComponent = components?.Button ?? providerComponents.Button ?? Button;
 
   return (
     <>
@@ -27,7 +34,7 @@ export function CookieBanner({
         <section
           aria-label={texts.banner.title}
           className={cn("nsr-banner", className)}
-          style={themeStyle}
+          {...themeAttributes}
         >
           <div className={cn("nsr-banner__card", contentClassName)}>
             <div className="nsr-banner__text">
@@ -76,7 +83,10 @@ export function CookieBanner({
           </div>
         </section>
       ) : null}
-      <CookieSettingsDialog {...dialogProps} />
+      <CookieSettingsDialog
+        {...dialogProps}
+        components={{ ...components, ...dialogProps?.components }}
+      />
     </>
   );
 }

@@ -149,28 +149,45 @@ export type Texts = {
 export type TextOverrides = DeepPartial<Texts>;
 
 /**
- * Simple color palette. Provide any subset of the colors you want to
- * change; everything else keeps the built-in look.
+ * Color palette. Provide any subset; everything else keeps the built-in look.
+ *
+ * Only five colors are true inputs: `primaryColor`, `primaryTextColor`,
+ * `accentColor`, `surfaceColor` and `textColor`. Every other color is derived
+ * from those with `color-mix()` unless you set it, so a dark surface with light
+ * text automatically gets matching muted text, borders, secondary buttons,
+ * hover states and switch tracks.
  */
 export type ThemePalette = {
   /** Main action color (primary buttons, active switches). */
   primaryColor?: string;
-  /** Text color on primary buttons. */
+  /** Text color on primary buttons. Also the switch thumb color when on. */
   primaryTextColor?: string;
-  /** Secondary button background. */
+  /** Primary button hover background. Derived from primary + primary text. */
+  primaryHoverColor?: string;
+  /** Secondary button background. Derived: same as `surfaceColor`. */
   secondaryColor?: string;
-  /** Text color on secondary buttons. */
+  /** Text color on secondary buttons. Derived: same as `textColor`. */
   secondaryTextColor?: string;
-  /** Accent color (links, highlights). */
+  /** Accent color (links, disclosure triggers). */
   accentColor?: string;
   /** Background of the banner and dialog. */
   surfaceColor?: string;
+  /** Background of the required-category card and button hover states. Derived from surface + text. */
+  surfaceMutedColor?: string;
   /** Main text color. */
   textColor?: string;
-  /** Muted/secondary text color. */
+  /** Muted/secondary text color. Derived from text + surface. */
   mutedTextColor?: string;
-  /** Border color. */
+  /** Border color. Derived from text + surface. */
   borderColor?: string;
+  /** Focus ring color. Derived: same as `primaryColor`. */
+  ringColor?: string;
+  /** Switch track color when off. Derived from text + surface. */
+  switchOffColor?: string;
+  /** Switch thumb color for both states. Derived: `surfaceColor` when off, `primaryTextColor` when on. */
+  switchThumbColor?: string;
+  /** Dialog backdrop (dim layer behind the settings dialog). */
+  backdropColor?: string;
 };
 
 /** What is persisted (localStorage and/or cookie) and shared with `onDecision`. */
@@ -253,10 +270,11 @@ export type CollapsibleProps = {
   contentClassName?: string;
 };
 
-/** Escape hatch: swap the default Button/Switch for your own components. */
+/** Escape hatch: swap the default Button/Switch/Collapsible for your own components. */
 export type PreferenceComponents = {
   Button?: React.ComponentType<ButtonLikeProps>;
   Switch?: React.ComponentType<SwitchLikeProps>;
+  Collapsible?: React.ComponentType<CollapsibleProps>;
 };
 
 export type CookieBannerConfigurationProviderProps = {
@@ -276,9 +294,19 @@ export type CookieBannerConfigurationProviderProps = {
   language?: string;
   /** Override or extend any built-in text. Fully typed. */
   texts?: TextOverrides;
-  /** Simple color palette override. */
+  /**
+   * Color palette override. Applied to the banner, the dialog and the
+   * settings link in both light and dark mode (unless `darkTheme` overrides
+   * a color for dark mode).
+   */
   theme?: ThemePalette;
-  /** Swap the default Button/Switch for your own components. */
+  /**
+   * Colors that apply only under a `.dark` or `[data-theme="dark"]`
+   * ancestor. Any color not set here falls back to `theme`, then to the
+   * built-in dark palette.
+   */
+  darkTheme?: ThemePalette;
+  /** Swap the default Button/Switch/Collapsible for your own components. */
   components?: PreferenceComponents;
   /** Storage key: the localStorage key and/or cookie name. Default: "non-spooky-react-cookie". */
   storageKey?: string;
@@ -348,9 +376,19 @@ export type CookieBannerContextValue = {
   /** The `scripts` map the provider was given, keyed by script id. */
   scripts: ConsentScripts;
   theme: ThemePalette;
+  darkTheme: ThemePalette;
   components: PreferenceComponents;
-  /** CSS custom properties derived from `theme`, ready to spread onto any element. */
+  /**
+   * `theme` as inline CSS custom properties. Kept for custom elements that
+   * only need the light palette; prefer spreading `themeAttributes` so the
+   * element also picks up `darkTheme`.
+   */
   themeStyle: React.CSSProperties;
+  /**
+   * Marker attribute that scopes the provider's theme rules to an element.
+   * Spread it onto any element of your own that uses `--nsr-*` variables.
+   */
+  themeAttributes: Record<`data-${string}`, string>;
   acceptAll: () => void;
   rejectAll: () => void;
   savePreferences: (partial: PreferencesUpdate) => void;
@@ -381,7 +419,11 @@ export type CookieBannerProps = {
   actionsClassName?: string;
   /** Extra classes applied to every button. */
   buttonClassName?: string;
-  /** Swap the default Button for your own. */
+  /**
+   * Swap the default components for the banner and the dialog it renders.
+   * Wins over the provider's `components`; `dialogProps.components` wins
+   * over this for the dialog only.
+   */
   components?: PreferenceComponents;
   /**
    * Props forwarded to the settings dialog that `CookieBanner` renders for
@@ -401,6 +443,8 @@ export type CookieSettingsDialogProps = {
   categoryCardClassName?: string;
   itemClassName?: string;
   buttonClassName?: string;
+  /** Swap the default components for this dialog. Wins over the provider's `components`. */
+  components?: PreferenceComponents;
 };
 
 export type CookieSettingsLinkProps = React.ButtonHTMLAttributes<HTMLButtonElement>;

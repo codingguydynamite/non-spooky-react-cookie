@@ -354,10 +354,58 @@ code {
   border: 1px solid #e4e4e7;
 }
 
+/* Inside the dark frame the playground chrome goes dark too, so the frame
+   reads as a dark-mode preview rather than a black box around white cards. */
 .pg-dark-frame.dark {
+  color-scheme: dark;
   background: #09090b;
   border-color: #27272a;
   color: #fafafa;
+}
+
+.pg-dark-frame.dark .pg-card {
+  background: #18181b;
+  border-color: #27272a;
+  color: #fafafa;
+}
+
+.pg-dark-frame.dark .pg-btn {
+  background: #27272a;
+  border-color: #3f3f46;
+  color: #fafafa;
+}
+
+.pg-dark-frame.dark .pg-btn:hover {
+  background: #3f3f46;
+}
+
+.pg-dark-frame.dark .pg-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #a1a1aa;
+}
+
+.pg-dark-frame.dark .pg-chip {
+  background: #27272a;
+  border-color: #3f3f46;
+  color: #d4d4d8;
+}
+
+.pg-dark-frame.dark .pg-chip--on {
+  background: #052e16;
+  border-color: #166534;
+  color: #86efac;
+}
+
+.pg-dark-frame.dark .pg-chip--off {
+  background: #450a0a;
+  border-color: #991b1b;
+  color: #fca5a5;
+}
+
+.pg-dark-frame.dark .pg-muted,
+.pg-dark-frame.dark .pg-label {
+  color: #a1a1aa;
 }
 
 /* Scenario: custom components / extra classes on library parts.

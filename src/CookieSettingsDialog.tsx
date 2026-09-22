@@ -22,16 +22,17 @@ function OpenSettingsDialog({
   categoryCardClassName,
   itemClassName,
   buttonClassName,
+  components: ownComponents,
 }: Readonly<CookieSettingsDialogProps>) {
   const {
     categories,
     closeSettings,
-    components,
+    components: providerComponents,
     preferences,
     resolveLabel,
     savePreferences,
     texts,
-    themeStyle,
+    themeAttributes,
   } = usePreferences();
   const dialogRef = useRef<HTMLDialogElement>(null);
   // Mounted only while open, so the initial value is the current decision.
@@ -40,11 +41,15 @@ function OpenSettingsDialog({
   // showModal() gives us the top layer, focus trap, and Escape-to-close.
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
+    if (dialog && !dialog.open && typeof dialog.showModal === "function") {
+      dialog.showModal();
+    }
   }, []);
 
+  const components = { ...providerComponents, ...ownComponents };
   const ButtonComponent = components.Button ?? Button;
   const SwitchComponent = components.Switch ?? Switch;
+  const CollapsibleComponent = components.Collapsible ?? Collapsible;
 
   const setAccepted = (ids: string[], value: boolean) =>
     setDraft((current) => {
@@ -68,7 +73,7 @@ function OpenSettingsDialog({
       className={cn("nsr-settings-dialog", className)}
       onCancel={handleCancel}
       ref={dialogRef}
-      style={themeStyle}
+      {...themeAttributes}
     >
       {/*
         Click-to-close backdrop as a real (visually inert) button, sitting
@@ -123,7 +128,7 @@ function OpenSettingsDialog({
                 </div>
 
                 {items.length > 0 ? (
-                  <Collapsible
+                  <CollapsibleComponent
                     count={items.length}
                     label={texts.dialog.itemsLabel}
                     contentClassName="nsr-category__items"
@@ -150,7 +155,7 @@ function OpenSettingsDialog({
                         </div>
                       );
                     })}
-                  </Collapsible>
+                  </CollapsibleComponent>
                 ) : null}
               </section>
             );

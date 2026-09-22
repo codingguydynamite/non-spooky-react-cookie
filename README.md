@@ -243,7 +243,7 @@ The package ships one small stylesheet and no framework dependency. Three layers
 
 ### 1. The `theme` prop
 
-Provide any subset of colors; everything else keeps the built-in look. Every color is a `--nsr-*` CSS custom property written inline on the banner and dialog roots, so a value you pass wins in both light and dark mode.
+Provide any subset of colors; everything else keeps the built-in look. Five colors are the real inputs: `primaryColor`, `primaryTextColor`, `accentColor`, `surfaceColor` and `textColor`. Muted text, borders, secondary buttons, hover backgrounds, the switch track and thumb and the focus ring are derived from those with `color-mix()`, so a dark surface with light text gets matching everything. Set a derived color (`mutedTextColor`, `borderColor`, `surfaceMutedColor`, `secondaryColor`, `secondaryTextColor`, `primaryHoverColor`, `ringColor`, `switchOffColor`, `switchThumbColor`, `backdropColor`) only when you want to override the derivation.
 
 ```tsx
 <CookieBannerConfigurationProvider
@@ -251,12 +251,21 @@ Provide any subset of colors; everything else keeps the built-in look. Every col
     primaryColor: "#0ea5e9",
     primaryTextColor: "#ffffff",
     accentColor: "#0284c7",
-    surfaceColor: "#ffffff",
+  }}
+  darkTheme={{
+    primaryColor: "#7dd3fc",
+    primaryTextColor: "#082f49",
   }}
 >
   {children}
 </CookieBannerConfigurationProvider>
 ```
+
+`theme` applies in both light and dark mode. `darkTheme` applies only under a `.dark` or `[data-theme="dark"]` ancestor and falls back to `theme`, then to the built-in dark palette, for anything it does not set. Without `darkTheme`, a `theme` that sets `surfaceColor` should set `textColor` too, or dark mode will put the built-in light text on your surface.
+
+The provider renders one small `<style>` element with the values, scoped by a `data-nsr-theme` attribute that the banner, the dialog and `CookieSettingsLink` carry. To theme an element of your own the same way, spread `usePreferences().themeAttributes` onto it.
+
+Pick primary/text pairs with at least 4.5:1 contrast (the built-in ones do); the library does not adjust text color automatically.
 
 ### 2. CSS custom properties
 
@@ -275,11 +284,12 @@ Override the variables globally or per theme. The built-in dark palette applies 
 }
 ```
 
-All variables: `--nsr-primary`, `--nsr-primary-text`, `--nsr-secondary`, `--nsr-secondary-text`, `--nsr-accent`, `--nsr-surface`, `--nsr-surface-muted`, `--nsr-text`, `--nsr-muted`, `--nsr-border`, `--nsr-ring`, `--nsr-switch-off`, `--nsr-backdrop`, `--nsr-radius`, `--nsr-font`, `--nsr-z-banner`, `--nsr-z-dialog`.
+Inputs: `--nsr-primary`, `--nsr-primary-text`, `--nsr-accent`, `--nsr-surface`, `--nsr-text`, `--nsr-backdrop`, `--nsr-radius`, `--nsr-font`, `--nsr-z-banner`, `--nsr-z-dialog`.
+Derived unless you set them: `--nsr-muted`, `--nsr-border`, `--nsr-surface-muted`, `--nsr-secondary`, `--nsr-secondary-text`, `--nsr-primary-hover`, `--nsr-ring`, `--nsr-switch-off`, `--nsr-switch-thumb`.
 
 ### 3. Classes and your own components
 
-Every part carries a stable `nsr-*` class (`nsr-banner`, `nsr-banner__card`, `nsr-button--primary`, `nsr-switch`, `nsr-dialog__panel`, `nsr-category`, `nsr-item`, …), and every component accepts `className` plus per-part class props. Your classes are appended, so Tailwind utilities work fine. You can also swap the default `Button` / `Switch` for your own components via `components` (on the provider for everywhere, or on `CookieBanner` for the banner only).
+Every part carries a stable `nsr-*` class (`nsr-banner`, `nsr-banner__card`, `nsr-button--primary`, `nsr-switch`, `nsr-dialog__panel`, `nsr-category`, `nsr-item`, …), and every component accepts `className` plus per-part class props. Your classes are appended, so Tailwind utilities work fine. You can also swap the default `Button` / `Switch` / `Collapsible` for your own components via `components`: on the provider for everywhere, on `CookieBanner` for the banner and the dialog it renders, or in `dialogProps.components` for that dialog only.
 
 ```tsx
 <CookieBanner
@@ -368,7 +378,7 @@ By default, a visitor whose browser sends the signal and who has no stored decis
 - `scripts` – third-party scripts to manage (object map, keyed by script id — see "Managing third-party scripts")
 - `language` – `"en"` (default), `"de"` or `"pl"`
 - `texts` – typed overrides of any built-in string
-- `theme` – color palette (see "Styling")
+- `theme` – color palette, `darkTheme` – dark-mode overrides (see "Styling")
 - `components` – swap the default `Button` / `Switch`
 - `storageKey` – localStorage key and/or cookie name (default `"non-spooky-react-cookie"`)
 - `storage` – where the decision is persisted: `"localStorage"` (default), `"cookie"`, `"both"`, or a custom adapter (see "Storage")

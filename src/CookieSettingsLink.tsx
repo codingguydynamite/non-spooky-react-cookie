@@ -15,11 +15,12 @@ export function CookieSettingsLink({
   onClick,
   ...props
 }: Readonly<CookieSettingsLinkProps>) {
-  const { openSettings, texts } = usePreferences();
+  const { openSettings, texts, themeAttributes } = usePreferences();
 
   return (
     <button
       className={cn("nsr-settings-link", className)}
+      {...themeAttributes}
       onClick={(event) => {
         // Open the dialog first, then let the consumer's handler run — the
         // spread below must not be able to silently override the built-in.

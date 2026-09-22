@@ -1,7 +1,15 @@
 "use client";
 
 import type * as React from "react";
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { readGlobalPrivacyControl } from "./integrations/global-privacy-control";
 import { initGoogleTracker, updateGoogleTracker } from "./integrations/google-tracker";
 import { ensureScript, removeScript } from "./integrations/script-loader";
@@ -76,23 +84,70 @@ function buildState(
 const themeVariables: Record<keyof ThemePalette, string> = {
   primaryColor: "--nsr-primary",
   primaryTextColor: "--nsr-primary-text",
+  primaryHoverColor: "--nsr-primary-hover",
   secondaryColor: "--nsr-secondary",
   secondaryTextColor: "--nsr-secondary-text",
   accentColor: "--nsr-accent",
   surfaceColor: "--nsr-surface",
+  surfaceMutedColor: "--nsr-surface-muted",
   textColor: "--nsr-text",
   mutedTextColor: "--nsr-muted",
   borderColor: "--nsr-border",
+  ringColor: "--nsr-ring",
+  switchOffColor: "--nsr-switch-off",
+  switchThumbColor: "--nsr-switch-thumb",
+  backdropColor: "--nsr-backdrop",
 };
+
+/** The attribute that scopes a provider's theme rules to its elements. */
+export const THEME_ATTRIBUTE = "data-nsr-theme";
+
+/**
+ * Keeps a palette value safe to embed in a stylesheet: a value is a single
+ * CSS color, so it never needs a declaration or block terminator.
+ */
+function sanitizeCssValue(value: string): string {
+  return value.replace(/[;{}<>]/g, "").trim();
+}
+
+/** `[--nsr-x, value]` pairs for the set entries of a palette. */
+function themeEntries(theme: ThemePalette): Array<[string, string]> {
+  return Object.entries(themeVariables).flatMap(([key, variable]) => {
+    const value = theme[key as keyof ThemePalette];
+    return value ? [[variable, sanitizeCssValue(value)] as [string, string]] : [];
+  });
+}
 
 /** Resolves the theme palette into CSS custom properties (set values only). */
 function themeToStyle(theme: ThemePalette): React.CSSProperties {
-  const entries = Object.entries(themeVariables).flatMap(([key, variable]) => {
-    const value = theme[key as keyof ThemePalette];
-    return value ? [[variable, value]] : [];
-  });
+  return Object.fromEntries(themeEntries(theme)) as React.CSSProperties;
+}
 
-  return Object.fromEntries(entries) as React.CSSProperties;
+/**
+ * Builds the scoped stylesheet for one provider. `theme` applies to every
+ * element carrying the provider's theme attribute; `darkTheme` applies to the
+ * same elements under a `.dark` / `[data-theme="dark"]` ancestor. Returns an
+ * empty string when neither palette sets anything, so nothing is rendered.
+ */
+export function buildThemeCss(
+  id: string,
+  theme: ThemePalette,
+  darkTheme: ThemePalette,
+): string {
+  const scope = `[${THEME_ATTRIBUTE}="${id.replace(/["\\]/g, "")}"]`;
+  const block = (entries: Array<[string, string]>) =>
+    entries.map(([variable, value]) => `  ${variable}: ${value};`).join("\n");
+
+  const light = themeEntries(theme);
+  const dark = themeEntries(darkTheme);
+  const rules: string[] = [];
+
+  if (light.length > 0) rules.push(`${scope} {\n${block(light)}\n}`);
+  if (dark.length > 0) {
+    rules.push(`:is(.dark, [data-theme="dark"]) ${scope} {\n${block(dark)}\n}`);
+  }
+
+  return rules.join("\n");
 }
 
 export function CookieBannerConfigurationProvider({
@@ -102,6 +157,7 @@ export function CookieBannerConfigurationProvider({
   language = "en",
   texts: textOverrides,
   theme = {},
+  darkTheme = {},
   components = {},
   storageKey = DEFAULT_STORAGE_KEY,
   storage = "localStorage",
@@ -132,7 +188,27 @@ export function CookieBannerConfigurationProvider({
     () => resolveTexts(language, textOverrides),
     [language, textOverrides],
   );
-  const themeStyle = useMemo(() => themeToStyle(theme), [theme]);
+
+  // Theme rules live in a <style> scoped by this attribute (not inline
+  // styles) so `darkTheme` can win under a `.dark` ancestor. Keyed on the
+  // serialized palettes so an inline `theme={{ ... }}` literal is free.
+  const themeId = useId();
+  const themeKey = JSON.stringify(theme);
+  const darkThemeKey = JSON.stringify(darkTheme);
+  const themeStyle = useMemo(
+    () => themeToStyle(JSON.parse(themeKey) as ThemePalette),
+    [themeKey],
+  );
+  const themeCss = useMemo(
+    () =>
+      buildThemeCss(
+        themeId,
+        JSON.parse(themeKey) as ThemePalette,
+        JSON.parse(darkThemeKey) as ThemePalette,
+      ),
+    [darkThemeKey, themeId, themeKey],
+  );
+  const themeAttributes = useMemo(() => ({ [THEME_ATTRIBUTE]: themeId }), [themeId]);
 
   // Which category owns each item (used to resolve item labels).
   const itemToCategory = useMemo(() => {
@@ -312,8 +388,10 @@ export function CookieBannerConfigurationProvider({
       categories,
       scripts: scripts ?? {},
       theme,
+      darkTheme,
       components,
       themeStyle,
+      themeAttributes,
       acceptAll,
       rejectAll,
       savePreferences,
@@ -328,6 +406,7 @@ export function CookieBannerConfigurationProvider({
       categories,
       closeSettings,
       components,
+      darkTheme,
       globalPrivacyControl,
       hasDecision,
       isAllowed,
@@ -342,6 +421,7 @@ export function CookieBannerConfigurationProvider({
       state,
       texts,
       theme,
+      themeAttributes,
       themeStyle,
     ],
   );
@@ -371,6 +451,9 @@ export function CookieBannerConfigurationProvider({
   }, [rejectAll, windowJustDont]);
 
   return (
-    <CookieBannerContext.Provider value={value}>{children}</CookieBannerContext.Provider>
+    <CookieBannerContext.Provider value={value}>
+      {themeCss ? <style data-nsr-theme-style={themeId}>{themeCss}</style> : null}
+      {children}
+    </CookieBannerContext.Provider>
   );
 }
