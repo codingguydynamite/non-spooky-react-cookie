@@ -31,6 +31,9 @@
 - [ ] Add debug mode (log consent decisions and script load/unload to the console when enabled).
 - [ ] Component tests (Vitest + Testing Library) for the banner and the settings dialog.
 - [ ] Docs site (the playground could grow into it).
+- [ ] Błąd w examples: A form field element should have an id or name attribute
+A form field element has neither an id nor a name attribute. This might stop the browser from correctly autofilling the form.
+- [ ] dodac projekt w githubie
 
 ## Manual test notes
 
