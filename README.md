@@ -1,7 +1,7 @@
 # non-spooky-react-cookie
 
 [![npm](https://img.shields.io/npm/v/non-spooky-react-cookie)](https://www.npmjs.com/package/non-spooky-react-cookie)
-[![CI](https://github.com/KamilAdamski/non-spooky-react-cookie/actions/workflows/ci.yml/badge.svg)](https://github.com/KamilAdamski/non-spooky-react-cookie/actions/workflows/ci.yml)
+[![CI](https://github.com/codingguydynamite/non-spooky-react-cookie/actions/workflows/ci.yml/badge.svg)](https://github.com/codingguydynamite/non-spooky-react-cookie/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/non-spooky-react-cookie)](./LICENSE)
 
 A friendly, lightweight cookie consent manager for React and Next.js. Optional scripts stay out of the DOM until the visitor accepts them. No spooky tracking before the visitor says yes.
@@ -464,7 +464,7 @@ Because consent can be fine-grained, a category grants its signals when the cate
 The [`examples/vite-playground`](./examples/README.md) app has one page per feature: basic banner, fine-grained items, consent-gated scripts, loading a library only after consent, every storage strategy, a custom adapter, SSR initial preferences, languages, theming and dark mode, custom components, Google consent mode, version bumps, and programmatic control.
 
 ```bash
-git clone https://github.com/KamilAdamski/non-spooky-react-cookie
+git clone https://github.com/codingguydynamite/non-spooky-react-cookie
 cd non-spooky-react-cookie
 pnpm install
 pnpm example

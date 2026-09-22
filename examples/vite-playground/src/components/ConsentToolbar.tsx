@@ -3,11 +3,17 @@ import { usePreferences } from "non-spooky-react-cookie";
 /**
  * Shared debug toolbar used by most scenarios. Must be rendered inside a
  * CookieBannerConfigurationProvider. Shows the live consent state and gives
- * quick access to the settings dialog and a reset.
+ * quick access to the settings dialog and a reset. `onReset` runs after the
+ * library's own reset, for scenarios that need extra cleanup.
  */
-export function ConsentToolbar() {
+export function ConsentToolbar({ onReset }: { onReset?: () => void } = {}) {
   const { loaded, hasDecision, preferences, openSettings, resetPreferences } =
     usePreferences();
+
+  const handleReset = () => {
+    resetPreferences();
+    onReset?.();
+  };
 
   return (
     <div className="pg-card">
@@ -20,7 +26,7 @@ export function ConsentToolbar() {
         <button className="pg-btn" type="button" onClick={openSettings}>
           Open settings
         </button>
-        <button className="pg-btn pg-btn--ghost" type="button" onClick={resetPreferences}>
+        <button className="pg-btn pg-btn--ghost" type="button" onClick={handleReset}>
           Reset decision
         </button>
       </div>

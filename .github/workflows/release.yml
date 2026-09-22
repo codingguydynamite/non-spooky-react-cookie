@@ -39,12 +39,16 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # changesets/action v2 renamed its inputs (publish -> publish-script,
+      # title -> pr-title, commit -> commit-message,
+      # createGithubReleases -> create-github-releases). It authenticates with
+      # the default `github-token` input; a GITHUB_TOKEN env var is ignored.
+      # Release commits and tags are pushed through the GitHub API and are
+      # therefore signed by GitHub.
       - name: Create release PR or publish
         uses: changesets/action@v2
         with:
-          publish: pnpm release
-          title: "chore: release"
-          commit: "chore: release"
-          createGithubReleases: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          publish-script: pnpm release
+          pr-title: "chore: release"
+          commit-message: "chore: release"
+          create-github-releases: true

@@ -53,10 +53,11 @@ Nothing publishes on merge of a feature PR. Instead:
 1. You merge a PR that contains a changeset into `main`.
 2. `release.yml` runs, sees pending changesets, and opens (or updates) a PR titled **chore: release**. That PR deletes the changeset files, bumps `version` in `package.json`, and prepends the notes to `CHANGELOG.md`. Several merged changesets accumulate into the same PR.
 3. When you are ready to ship, merge **chore: release**.
-4. `release.yml` runs again, finds no pending changesets and a version that is not on npm yet, runs `pnpm release` (`pnpm build && changeset publish`), pushes the git tag `v1.2.3`, and creates a GitHub release with the CHANGELOG section.
-5. Publishing authenticates through **npm trusted publishing** (OIDC): GitHub proves to npm that the workflow ran from this repository, npm issues a short-lived token, and the package gets a provenance attestation visible on its npm page. There is no `NPM_TOKEN` secret to rotate or leak.
+4. `release.yml` runs again, finds no pending changesets and a version that is not on npm yet, runs `pnpm release` (`pnpm build && changeset publish`), pushes the git tag `v1.2.3`, and creates a GitHub release with the CHANGELOG section. `changesets/action` v2 pushes the release commit and the tag through the GitHub API, so both are signed by GitHub and attributed to `github-actions[bot]`.
+5. Publishing authenticates through **npm trusted publishing** (OIDC): GitHub proves to npm that the workflow ran from this repository and npm issues a short-lived token. There is no `NPM_TOKEN` secret to rotate or leak.
+6. npm adds a **provenance attestation** only when both the package and the source repository are public. The repository is private right now, so releases publish fine but without the "Provenance" badge. Make the repository public to get it; nothing in the workflow has to change.
 
-Check the result on `https://www.npmjs.com/package/non-spooky-react-cookie`: version, README, and the "Provenance" badge.
+Check the result on `https://www.npmjs.com/package/non-spooky-react-cookie`: version, README, and (public repository only) the "Provenance" badge.
 
 ## 4. One-time setup (do these once, in order)
 
@@ -68,8 +69,15 @@ gh repo create non-spooky-react-cookie --public --source . --push
 
 Then in the repository settings:
 
-- **Settings → Actions → General → Workflow permissions**: enable **Allow GitHub Actions to create and approve pull requests**. Without it the release workflow cannot open the "chore: release" PR.
+- **Settings → Actions → General → Workflow permissions**: enable **Allow GitHub Actions to create and approve pull requests**. Without it the release workflow cannot open the "chore: release" PR and fails with "Resource not accessible by integration". As of 2026-09-22 this is still **off** for `codingguydynamite/non-spooky-react-cookie`. Flip it in the UI or with:
+
+  ```bash
+  gh api -X PUT repos/codingguydynamite/non-spooky-react-cookie/actions/permissions/workflow \
+    -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true
+  ```
+
 - Optionally **Settings → Branches**: protect `main`, require the `CI` check.
+- The `repository`, `homepage` and `bugs` URLs in `package.json` must point at the repository the workflow actually runs in (`codingguydynamite/non-spooky-react-cookie`). With provenance enabled npm rejects the publish (E422) when `repository.url` does not match the repository in the OIDC token, and the comparison is case-sensitive.
 
 ### 4.2 npm account
 
@@ -78,7 +86,7 @@ Then in the repository settings:
 
 ### 4.3 First publish is manual
 
-Trusted publishing is configured per package, and the package must exist first. So the very first version is published from your machine:
+Trusted publishing is configured per package, and the package must exist first. So the very first version is published from your machine (as of 2026-09-22 the package is not on npm yet, so this step is still ahead of you):
 
 ```bash
 npm login
@@ -93,10 +101,16 @@ On npmjs.com open the package → **Settings** → **Trusted publisher** → **G
 
 | Field | Value |
 | --- | --- |
-| Organization or user | `KamilAdamski` |
+| Organization or user | `codingguydynamite` (the GitHub owner the workflow runs under, not the npm user) |
 | Repository | `non-spooky-react-cookie` |
 | Workflow filename | `release.yml` |
 | Environment | leave empty |
+
+All four fields are compared case-sensitively against the OIDC token, including the `.yml` extension. The same thing from the terminal, with npm 11.5.1 or newer:
+
+```bash
+npm trust github non-spooky-react-cookie --repo codingguydynamite/non-spooky-react-cookie --file release.yml --allow-publish
+```
 
 Then, under **Publishing access**, choose **Require two-factor authentication and disallow tokens**, which still allows trusted publishing. From now on merging "chore: release" publishes.
 
@@ -136,13 +150,16 @@ What the two validators mean:
 
 **Bump the React peer range.** That is a `major`. Update `peerDependencies`, the playground, and the README "Install" section together.
 
-**Update tooling.** Dependabot opens grouped weekly PRs for dev dependencies and actions. Biome updates may reformat code; run `pnpm lint:fix` and commit the result in the same PR.
+**Update tooling.** Dependabot opens weekly PRs: one grouped PR for dev dependencies and one PR per GitHub Action (`.github/dependabot.yml` only groups the npm ecosystem). Biome updates may reformat code; run `pnpm lint:fix` and commit the result in the same PR. Actions are pinned to a major tag (`@v7`); when Dependabot bumps a major, read that action's release notes before merging, because inputs get renamed or removed. `changesets/action` is pinned to `@v2`, whose inputs are kebab-case (`publish-script`, `pr-title`, `commit-message`, `create-github-releases`); the v1 names fail the step. GitHub moves `ubuntu-latest` to Ubuntu 26 from 2026-10-19; pin `runs-on: ubuntu-24.04` if a release breaks after that.
 
 ## 7. Troubleshooting
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| No "chore: release" PR appears after merging a changeset | Actions may not create PRs | Enable the setting in 4.1 |
+| No "chore: release" PR appears after merging a changeset, or the step fails with "Resource not accessible by integration" | Actions may not create PRs | Enable the setting in 4.1 |
+| Release step fails with "Unexpected input(s) 'publish', 'title', 'commit', 'createGithubReleases'" or "The following inputs have been renamed" | `changesets/action@v2` uses kebab-case inputs | Use `publish-script`, `pr-title`, `commit-message`, `create-github-releases`; drop any `GITHUB_TOKEN` env on that step, v2 reads the `github-token` input |
+| Publish fails with E422 mentioning provenance and `repository.url` | `package.json` `repository.url` does not match the GitHub repo the workflow ran in | Point it at `git+https://github.com/codingguydynamite/non-spooky-react-cookie.git`, exact casing |
+| Published fine but no "Provenance" badge on npm | Source repository is private | Expected. Make the repository public if you want provenance |
 | Publish step fails with 404 / E403 / "unable to authenticate" | Trusted publisher not configured, or repo/workflow name differs | Compare 4.4 with the actual repository and workflow filename, exactly |
 | Publish fails with "npm >= 11.5.1 required" | Old npm on the runner | `release.yml` runs `npm install -g npm@latest`; make sure that step is still there |
 | CI fails on `pnpm install --frozen-lockfile` | `package.json` changed without updating `pnpm-lock.yaml` | Run `pnpm install` locally and commit the lockfile |

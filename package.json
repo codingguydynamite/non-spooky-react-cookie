@@ -15,13 +15,13 @@
   ],
   "license": "MIT",
   "author": "Kamil Adamski",
-  "homepage": "https://github.com/KamilAdamski/non-spooky-react-cookie#readme",
+  "homepage": "https://github.com/codingguydynamite/non-spooky-react-cookie#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/KamilAdamski/non-spooky-react-cookie.git"
+    "url": "git+https://github.com/codingguydynamite/non-spooky-react-cookie.git"
   },
   "bugs": {
-    "url": "https://github.com/KamilAdamski/non-spooky-react-cookie/issues"
+    "url": "https://github.com/codingguydynamite/non-spooky-react-cookie/issues"
   },
   "type": "module",
   "sideEffects": [

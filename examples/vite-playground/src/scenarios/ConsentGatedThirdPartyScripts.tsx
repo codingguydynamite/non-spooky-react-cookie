@@ -59,15 +59,18 @@ const scripts: ConsentScripts = {
     attrs: { "data-pixel-id": "PLAYGROUND" },
   },
   // Inline scripts gated on categories; they draw into the boxes below.
+  // The target ids must differ from the script keys: the provider gives the
+  // injected <script> element `id = key`, and it sits in <head>, so a div with
+  // the same id would lose the getElementById lookup to the script tag.
   "demo-analytics": {
     category: "analytics",
-    children: drawCardScript("demo-analytics", "Analytics script ran and drew this."),
-    cleanup: () => clearCard("demo-analytics"),
+    children: drawCardScript("demo-analytics-target", "Analytics script ran and drew this."),
+    cleanup: () => clearCard("demo-analytics-target"),
   },
   "demo-marketing": {
     category: "marketing",
-    children: drawCardScript("demo-marketing", "Marketing script ran and drew this."),
-    cleanup: () => clearCard("demo-marketing"),
+    children: drawCardScript("demo-marketing-target", "Marketing script ran and drew this."),
+    cleanup: () => clearCard("demo-marketing-target"),
   },
 };
 
@@ -96,10 +99,10 @@ export function ConsentGatedThirdPartyScripts() {
       <div className="pg-card">
         <h3>Targets the inline scripts draw into</h3>
         <div className="pg-row" style={{ alignItems: "stretch" }}>
-          <div id="demo-analytics" className="pg-target" style={{ flex: 1 }}>
+          <div id="demo-analytics-target" className="pg-target" style={{ flex: 1 }}>
             Empty. Appears after consent.
           </div>
-          <div id="demo-marketing" className="pg-target" style={{ flex: 1 }}>
+          <div id="demo-marketing-target" className="pg-target" style={{ flex: 1 }}>
             Empty. Appears after consent.
           </div>
         </div>
