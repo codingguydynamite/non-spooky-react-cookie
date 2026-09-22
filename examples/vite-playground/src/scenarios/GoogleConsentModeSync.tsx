@@ -4,6 +4,7 @@ import {
   usePreferences,
 } from "non-spooky-react-cookie";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 function describe(entry: unknown): string {
   // gtag pushes `arguments` objects; turn them into readable JSON.
@@ -45,8 +46,10 @@ function DataLayerLog() {
  * Load your actual gtag.js via `scripts` and it will replay the queue.
  */
 export function GoogleConsentModeSync() {
+  const respectGpc = useRespectGpc();
   return (
     <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
       storageKey="pg-google"
       googleConsentMode
       config={{

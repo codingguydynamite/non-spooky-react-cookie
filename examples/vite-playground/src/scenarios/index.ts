@@ -5,6 +5,7 @@ import { ConsentGatedThirdPartyScripts } from "./ConsentGatedThirdPartyScripts";
 import { CustomButtonAndSwitchComponents } from "./CustomButtonAndSwitchComponents";
 import { CustomCategoriesWithFineGrainedItems } from "./CustomCategoriesWithFineGrainedItems";
 import { CustomStorageAdapterSessionStorage } from "./CustomStorageAdapterSessionStorage";
+import { GlobalPrivacyControl } from "./GlobalPrivacyControl";
 import { GoogleConsentModeSync } from "./GoogleConsentModeSync";
 import { JustDontGlobal } from "./JustDontGlobal";
 import { LoadLibraryOnlyAfterConsent } from "./LoadLibraryOnlyAfterConsent";
@@ -125,6 +126,14 @@ export const scenarios: Scenario[] = [
       "The provider registers window.justDont() automatically: one global call rejects every optional category, for console snippets and 'I don't care about cookies'-style extensions.",
     file: "JustDontGlobal.tsx",
     Component: JustDontGlobal,
+  },
+  {
+    id: "gpc",
+    title: "Global Privacy Control",
+    summary:
+      "The browser's GPC signal counts as 'Reject all' out of the box: no banner for visitors who already opted out in their browser. Opt out with respectGlobalPrivacyControl={false}. Simulate the signal here.",
+    file: "GlobalPrivacyControl.tsx",
+    Component: GlobalPrivacyControl,
   },
   {
     id: "programmatic",

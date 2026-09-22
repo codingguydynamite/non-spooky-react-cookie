@@ -2,6 +2,7 @@ import type { ThemePalette } from "non-spooky-react-cookie";
 import { CookieBanner, CookieBannerConfigurationProvider } from "non-spooky-react-cookie";
 import { useState } from "react";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 const fields: Array<{ key: keyof ThemePalette; label: string }> = [
   { key: "primaryColor", label: "primaryColor" },
@@ -20,6 +21,7 @@ const fields: Array<{ key: keyof ThemePalette; label: string }> = [
  *    dialog roots, so a value you pass wins in both modes.
  */
 export function ThemeColorsAndDarkMode() {
+  const respectGpc = useRespectGpc();
   const [dark, setDark] = useState(false);
   const [theme, setTheme] = useState<ThemePalette>({});
 
@@ -29,7 +31,11 @@ export function ThemeColorsAndDarkMode() {
   return (
     // The wrapper carries the `.dark` class. In a real app this is <html>.
     <div className={dark ? "pg-dark-frame dark" : "pg-dark-frame"}>
-      <CookieBannerConfigurationProvider storageKey="pg-theme" theme={theme}>
+      <CookieBannerConfigurationProvider
+        respectGlobalPrivacyControl={respectGpc}
+        storageKey="pg-theme"
+        theme={theme}
+      >
         <div className="pg-card">
           <div className="pg-row">
             <label className="pg-row" style={{ cursor: "pointer" }}>

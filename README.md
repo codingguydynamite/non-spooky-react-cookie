@@ -333,6 +333,22 @@ It does exactly what the "Reject all" button does: required categories stay on, 
 
 The provider registers the function on mount and removes it on unmount. If `window.justDont` already exists (another banner, your own code) the provider logs a warning and takes over the slot. Opt out with `windowJustDont={false}` on the provider.
 
+## Global Privacy Control
+
+[Global Privacy Control](https://globalprivacycontrol.org/) (GPC) is a browser setting that says "do not sell or share my data". Browsers that support it (Firefox, Brave, DuckDuckGo; extensions such as Privacy Badger add it elsewhere) send a `Sec-GPC: 1` header and expose `navigator.globalPrivacyControl === true`. The provider honors it out of the box; opt out with one prop:
+
+```tsx
+<CookieBannerConfigurationProvider respectGlobalPrivacyControl={false}>
+```
+
+By default, a visitor whose browser sends the signal and who has no stored decision for the current `version` is treated as if they clicked "Reject all": required categories stay on, optional ones stay off, consent-gated scripts stay out, `onDecision` fires, and the banner never shows. Three rules keep this predictable:
+
+- A decision the visitor already made on your site always wins over the signal.
+- The signal-driven decision is not persisted. The signal is live, so turning it off in the browser brings the banner back on the next visit.
+- The visitor can still opt in through the settings dialog (`CookieSettingsLink`), and that choice is persisted as usual.
+
+`usePreferences().globalPrivacyControl` tells you whether the signal was detected, so you can show a small "we honored your browser's privacy setting" note instead of a banner. How a GPC signal maps onto consent is a decision the spec leaves to the publisher; the default here is the privacy-friendly reading, and `respectGlobalPrivacyControl={false}` turns it off if your legal setup needs the banner regardless.
+
 ## Provider options
 
 ```tsx
@@ -361,6 +377,7 @@ The provider registers the function on mount and removes it on unmount. If `wind
 - `version` – bump this to ask visitors again (old stored state is ignored)
 - `googleConsentMode` – opt in to Google consent mode sync (see "Google consent mode")
 - `windowJustDont` – register the `window.justDont()` global (default `true`; set `false` to opt out — see "window.justDont()")
+- `respectGlobalPrivacyControl` – treat the browser's GPC signal as "Reject all" (default `true`; set `false` to opt out — see "Global Privacy Control")
 - `onDecision` – called whenever the visitor makes or changes their choice
 
 ## Storage

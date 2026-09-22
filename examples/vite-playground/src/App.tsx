@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { GpcNotice } from "./components/GpcNotice";
 import { scenarios } from "./scenarios";
 
 function readHash(): string {
@@ -49,6 +50,7 @@ export function App() {
       </aside>
 
       <main className="pg-main">
+        <GpcNotice />
         <header className="pg-header">
           <p className="pg-eyebrow">{active.file}</p>
           <h2 className="pg-title">{active.title}</h2>

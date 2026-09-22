@@ -5,6 +5,7 @@ import {
   usePreferences,
 } from "non-spooky-react-cookie";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 /**
  * Categories are groups; items are fine-grained entries inside a group.
@@ -67,8 +68,13 @@ function Gates() {
 }
 
 export function CustomCategoriesWithFineGrainedItems() {
+  const respectGpc = useRespectGpc();
   return (
-    <CookieBannerConfigurationProvider storageKey="pg-categories" config={config}>
+    <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
+      storageKey="pg-categories"
+      config={config}
+    >
       <Gates />
       <ConsentToolbar />
       <CookieBanner />

@@ -6,6 +6,7 @@ import {
   usePreferences,
 } from "non-spooky-react-cookie";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 declare global {
   interface Window {
@@ -73,8 +74,10 @@ function ConfettiWidget() {
 }
 
 export function LoadLibraryOnlyAfterConsent() {
+  const respectGpc = useRespectGpc();
   return (
     <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
       storageKey="pg-load-after-consent"
       scripts={scripts}
     >

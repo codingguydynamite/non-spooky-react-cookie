@@ -113,6 +113,31 @@ code {
   line-height: 1.5;
 }
 
+.pg-alert {
+  border: 1px solid #fcd34d;
+  border-left-width: 4px;
+  border-radius: 0.9rem;
+  background: #fef9c3;
+  color: #713f12;
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 1.25rem;
+}
+
+.pg-alert p {
+  margin: 0 0 0.6rem;
+  line-height: 1.5;
+}
+
+.pg-alert code {
+  background: #fef08a;
+  border-radius: 0.3rem;
+  padding: 0.05rem 0.3rem;
+}
+
+.pg-alert label {
+  cursor: pointer;
+}
+
 .pg-card {
   border: 1px solid #e4e4e7;
   border-radius: 0.9rem;

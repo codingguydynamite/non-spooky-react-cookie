@@ -8,6 +8,7 @@ import {
 import { readPreferencesFromCookies } from "non-spooky-react-cookie/server";
 import { useRef, useState } from "react";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 import { StoredValue } from "../components/StoredValue";
 
 const STORAGE_KEY = "pg-ssr";
@@ -55,6 +56,7 @@ function FirstRenderProbe() {
  * synchronously before the provider renders for the first time.
  */
 export function SsrInitialPreferencesNoBannerFlash() {
+  const respectGpc = useRespectGpc();
   const [mountKey, setMountKey] = useState(0);
   // Read at render time, before the provider mounts (once per mount key).
   const initial = readPreferencesFromCookies(document.cookie, STORAGE_KEY);
@@ -77,6 +79,7 @@ export function SsrInitialPreferencesNoBannerFlash() {
       </div>
 
       <CookieBannerConfigurationProvider
+        respectGlobalPrivacyControl={respectGpc}
         key={mountKey}
         storageKey={STORAGE_KEY}
         storage="cookie"

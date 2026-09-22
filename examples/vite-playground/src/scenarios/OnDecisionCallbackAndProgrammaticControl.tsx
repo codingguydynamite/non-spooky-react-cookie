@@ -6,6 +6,7 @@ import {
 } from "non-spooky-react-cookie";
 import { useState } from "react";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 function Controls() {
   const {
@@ -58,6 +59,7 @@ function Controls() {
  * server-side flag, or just to log.
  */
 export function OnDecisionCallbackAndProgrammaticControl() {
+  const respectGpc = useRespectGpc();
   const [log, setLog] = useState<string[]>([]);
 
   const onDecision = (state: PreferencesState) => {
@@ -73,6 +75,7 @@ export function OnDecisionCallbackAndProgrammaticControl() {
 
   return (
     <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
       storageKey="pg-programmatic"
       onDecision={onDecision}
     >

@@ -1,6 +1,7 @@
 import type { ButtonLikeProps, SwitchLikeProps } from "non-spooky-react-cookie";
 import { CookieBanner, CookieBannerConfigurationProvider } from "non-spooky-react-cookie";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 /** Your design system's button. Must accept `variant` plus button props. */
 function PillButton({ variant = "secondary", className, ...props }: ButtonLikeProps) {
@@ -43,8 +44,10 @@ function CheckboxSwitch({
  * next to the built-in `nsr-*` ones.
  */
 export function CustomButtonAndSwitchComponents() {
+  const respectGpc = useRespectGpc();
   return (
     <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
       storageKey="pg-components"
       components={{ Button: PillButton, Switch: CheckboxSwitch }}
     >

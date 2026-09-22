@@ -1,7 +1,8 @@
 "use client";
 
 import type * as React from "react";
-import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { readGlobalPrivacyControl } from "./integrations/global-privacy-control";
 import { initGoogleTracker, updateGoogleTracker } from "./integrations/google-tracker";
 import { ensureScript, removeScript } from "./integrations/script-loader";
 import { resolveTexts } from "./resolve-texts";
@@ -109,6 +110,7 @@ export function CookieBannerConfigurationProvider({
   version = DEFAULT_VERSION,
   googleConsentMode = false,
   windowJustDont = true,
+  respectGlobalPrivacyControl = true,
   onDecision,
 }: Readonly<CookieBannerConfigurationProviderProps>) {
   // Keyed on the serialized options so an inline `cookieOptions={{ ... }}`
@@ -150,6 +152,7 @@ export function CookieBannerConfigurationProvider({
 
   const [loaded, setLoaded] = useState(initialPreferences !== undefined);
   const [hasDecision, setHasDecision] = useState(restoredInitial !== null);
+  const [globalPrivacyControl, setGlobalPrivacyControl] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [state, setState] = useState<PreferencesState>(
     () => restoredInitial ?? buildState(version, categories, false),
@@ -162,19 +165,43 @@ export function CookieBannerConfigurationProvider({
     [categories, googleConsentMode],
   );
 
+  // The hydration effect reads `onDecision` through a ref so an inline
+  // callback (new identity every render) never re-runs it.
+  const onDecisionRef = useRef(onDecision);
+  useEffect(() => {
+    onDecisionRef.current = onDecision;
+  }, [onDecision]);
+
   // Restore the stored decision (same version only) after hydration.
   useEffect(() => {
     if (googleConsentMode) initGoogleTracker();
 
     const stored = readPreferences(store, storageKey);
     const restored = stored?.version === version ? stored : null;
+    const gpc = respectGlobalPrivacyControl && readGlobalPrivacyControl();
     const next = restored ?? buildState(version, categories, false);
 
+    // An explicit answer on this site always wins. Without one, an active
+    // Global Privacy Control signal counts as "Reject all" — `next` already
+    // is that state — so the banner never shows. It is kept in memory only:
+    // the signal is live, and turning it off should bring the banner back.
+    const decidedByGpc = restored === null && gpc;
+
     setState(next);
-    setHasDecision(restored !== null);
+    setHasDecision(restored !== null || decidedByGpc);
+    setGlobalPrivacyControl(gpc);
     syncGoogle(next);
     setLoaded(true);
-  }, [categories, googleConsentMode, storageKey, store, syncGoogle, version]);
+    if (decidedByGpc) onDecisionRef.current?.(next);
+  }, [
+    categories,
+    googleConsentMode,
+    respectGlobalPrivacyControl,
+    storageKey,
+    store,
+    syncGoogle,
+    version,
+  ]);
 
   // On unmount (or a new `scripts` map) unload exactly the declared scripts.
   useEffect(() => {
@@ -278,6 +305,7 @@ export function CookieBannerConfigurationProvider({
       loaded,
       hasDecision,
       showBanner: loaded && !hasDecision,
+      globalPrivacyControl,
       settingsOpen,
       preferences: state,
       texts,
@@ -300,6 +328,7 @@ export function CookieBannerConfigurationProvider({
       categories,
       closeSettings,
       components,
+      globalPrivacyControl,
       hasDecision,
       isAllowed,
       loaded,

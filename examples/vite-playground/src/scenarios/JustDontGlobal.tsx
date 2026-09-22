@@ -1,6 +1,7 @@
 import { CookieBanner, CookieBannerConfigurationProvider } from "non-spooky-react-cookie";
 import { useState } from "react";
 import { ConsentToolbar } from "../components/ConsentToolbar";
+import { useRespectGpc } from "../components/gpc-settings";
 
 /**
  * As soon as the provider mounts, `window.justDont()` is available from the
@@ -8,6 +9,7 @@ import { ConsentToolbar } from "../components/ConsentToolbar";
  * exactly the way a console snippet or a browser extension would.
  */
 export function JustDontGlobal() {
+  const respectGpc = useRespectGpc();
   const [log, setLog] = useState<string[]>([]);
 
   const logCall = (label: string) => {
@@ -25,7 +27,10 @@ export function JustDontGlobal() {
   };
 
   return (
-    <CookieBannerConfigurationProvider storageKey="pg-just-dont">
+    <CookieBannerConfigurationProvider
+      respectGlobalPrivacyControl={respectGpc}
+      storageKey="pg-just-dont"
+    >
       <div className="pg-card">
         <h3>window.justDont()</h3>
         <p className="pg-muted">
