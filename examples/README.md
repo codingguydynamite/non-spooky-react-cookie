@@ -13,6 +13,8 @@ In dev mode the playground imports the library straight from `src/`, so edits to
 
 Every scenario lives in one file under `vite-playground/src/scenarios/` and uses its own `storageKey`, so pages never share state.
 
+The playground works on phones too: open the dev server URL on a device in the same network (or use the device toolbar in your browser devtools). Under 800px the scenario list becomes a picker at the top, controls grow to 44px tap targets, and the page reserves room for the fixed banner so nothing hides behind it.
+
 | File | Shows |
 | --- | --- |
 | `BasicBannerWithDefaults.tsx` | Zero-config banner, built-in categories and texts, footer settings link |

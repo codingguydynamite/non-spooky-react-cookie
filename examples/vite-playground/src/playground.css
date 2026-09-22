@@ -7,6 +7,8 @@
     sans-serif;
   color: #18181b;
   background: #f4f4f5;
+  /* iOS Safari: keep text at the size we set instead of auto-zooming it. */
+  -webkit-text-size-adjust: 100%;
 }
 
 * {
@@ -20,12 +22,47 @@ body {
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.85em;
+  overflow-wrap: anywhere;
 }
 
+button,
+select,
+input {
+  /* No 300ms tap delay, no double-tap zoom on controls. */
+  touch-action: manipulation;
+}
+
+/* ---------------------------------------------------------------- layout */
+
 .pg-layout {
+  /* Set from App.tsx to the live height of the fixed banner. */
+  --pg-banner-height: 0px;
   display: grid;
-  grid-template-columns: 18rem 1fr;
+  /* minmax(0, 1fr): a wide <pre> must not stretch the column (and the page). */
+  grid-template-columns: 18rem minmax(0, 1fr);
   min-height: 100vh;
+}
+
+.pg-skip {
+  position: absolute;
+  left: 1rem;
+  top: -100%;
+  z-index: 200;
+  border-radius: 0.5rem;
+  background: #0e7490;
+  color: #ffffff;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pg-skip:focus {
+  top: 1rem;
+}
+
+/* Phone header; hidden on desktop. */
+.pg-topbar {
+  display: none;
 }
 
 .pg-sidebar {
@@ -47,9 +84,9 @@ code {
 
 .pg-hint {
   margin: 0 0 1rem;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   line-height: 1.4;
-  color: #71717a;
+  color: #52525b;
 }
 
 .pg-nav {
@@ -61,10 +98,12 @@ code {
 
 .pg-nav__link {
   display: block;
-  padding: 0.45rem 0.6rem;
+  min-height: 2.5rem;
+  padding: 0.6rem 0.6rem;
   border-radius: 0.5rem;
   color: #3f3f46;
   font-size: 0.85rem;
+  line-height: 1.3;
   text-decoration: none;
 }
 
@@ -86,7 +125,9 @@ code {
 }
 
 .pg-main {
-  padding: 2rem 2.5rem 14rem; /* bottom room so the fixed banner never covers content */
+  min-width: 0;
+  /* Bottom room so the fixed banner never covers content. */
+  padding: 2rem 2.5rem calc(var(--pg-banner-height) + 3rem);
   max-width: 64rem;
 }
 
@@ -97,14 +138,21 @@ code {
 .pg-eyebrow {
   margin: 0;
   font-size: 0.75rem;
-  color: #71717a;
+  color: #52525b;
   font-family: ui-monospace, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
 }
 
 .pg-title {
   margin: 0.25rem 0 0.5rem;
   font-size: 1.6rem;
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+/* Focused programmatically after switching scenarios; no ring for mouse users. */
+.pg-title:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .pg-summary {
@@ -112,6 +160,8 @@ code {
   color: #52525b;
   line-height: 1.5;
 }
+
+/* --------------------------------------------------------------- blocks */
 
 .pg-alert {
   border: 1px solid #fcd34d;
@@ -173,6 +223,31 @@ code {
   flex: 1;
 }
 
+/* Buttons that belong together; wraps as a unit, sits right on desktop. */
+.pg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+/* Side-by-side boxes on desktop, stacked on phones. */
+.pg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.5rem;
+}
+
+/* Native checkbox / radio: large enough to hit, aligned with the label text. */
+.pg-row input[type="checkbox"],
+.pg-row input[type="radio"] {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #0e7490;
+}
+
 .pg-chip {
   display: inline-flex;
   align-items: center;
@@ -187,7 +262,7 @@ code {
 .pg-chip--on {
   border-color: #a7f3d0;
   background: #ecfdf5;
-  color: #047857;
+  color: #065f46;
 }
 
 .pg-chip--off {
@@ -197,6 +272,10 @@ code {
 }
 
 .pg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
   border: 1px solid #d4d4d8;
   border-radius: 0.6rem;
   background: #ffffff;
@@ -204,6 +283,8 @@ code {
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -213,7 +294,7 @@ code {
 
 .pg-btn--ghost {
   border-color: transparent;
-  color: #71717a;
+  color: #52525b;
 }
 
 .pg-btn--primary {
@@ -231,13 +312,13 @@ code {
 .pg-label {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;
-  color: #71717a;
+  color: #52525b;
 }
 
 .pg-muted {
   margin: 0.15rem 0 0;
-  font-size: 0.75rem;
-  color: #71717a;
+  font-size: 0.8rem;
+  color: #52525b;
 }
 
 .pg-kv {
@@ -246,7 +327,7 @@ code {
 
 .pg-kv__row {
   display: grid;
-  grid-template-columns: 8rem 1fr;
+  grid-template-columns: 8rem minmax(0, 1fr);
   gap: 0.75rem;
   padding: 0.35rem 0;
   border-top: 1px solid #f4f4f5;
@@ -264,6 +345,7 @@ code {
 
 .pg-code {
   display: inline-block;
+  max-width: 100%;
   background: #f4f4f5;
   border-radius: 0.35rem;
   padding: 0.1rem 0.35rem;
@@ -271,14 +353,19 @@ code {
 
 .pg-script {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   border: 1px solid #e4e4e7;
   border-radius: 0.75rem;
   padding: 0.6rem 0.9rem;
   margin-bottom: 0.5rem;
   list-style: none;
+}
+
+.pg-script > div:first-child {
+  min-width: 0;
 }
 
 .pg-scripts {
@@ -291,6 +378,7 @@ code {
   padding: 0.2rem 0.6rem;
   font-size: 0.75rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .pg-status--blocked {
@@ -300,12 +388,12 @@ code {
 
 .pg-status--loading {
   background: #fef3c7;
-  color: #b45309;
+  color: #92400e;
 }
 
 .pg-status--loaded {
   background: #d1fae5;
-  color: #047857;
+  color: #065f46;
 }
 
 .pg-status--error {
@@ -314,11 +402,16 @@ code {
 }
 
 .pg-error {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #b91c1c;
+  overflow-wrap: anywhere;
 }
 
 .pg-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
   min-height: 4.5rem;
   border: 1px dashed #d4d4d8;
   border-radius: 0.75rem;
@@ -337,6 +430,9 @@ code {
   border-radius: 0.6rem;
   font-size: 0.75rem;
   line-height: 1.5;
+  /* Long dataLayer lines wrap instead of widening the page. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .pg-footer {
@@ -344,13 +440,33 @@ code {
   border-top: 1px solid #e4e4e7;
   padding-top: 1rem;
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
   font-size: 0.85rem;
-  color: #71717a;
+  color: #52525b;
 }
 
 .pg-footer a {
   color: inherit;
+}
+
+/* Footer link and the settings link of the library: comfortable tap height. */
+.pg-footer a,
+.pg-footer .nsr-settings-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+}
+
+/* Scenario: theme swatches. */
+.pg-swatch input[type="color"] {
+  width: 2.75rem;
+  height: 2.25rem;
+  padding: 0.1rem;
+  border: 1px solid #d4d4d8;
+  border-radius: 0.5rem;
+  background: #ffffff;
 }
 
 /* Scenario: dark mode wrapper. The library only needs the `.dark` class. */
@@ -425,8 +541,13 @@ code {
   color: #a1a1aa;
 }
 
+.pg-dark-frame.dark .pg-swatch input[type="color"] {
+  background: #18181b;
+  border-color: #3f3f46;
+}
+
 /* Scenario: custom components / extra classes on library parts.
-   Compound selectors beat the library's single-class rules, no !important. */
+   Compound selectors beat the single-class rules of the library, no !important. */
 .nsr-banner__card.pg-fancy-card,
 .nsr-dialog__panel.pg-fancy-card {
   border-width: 2px;
@@ -435,6 +556,10 @@ code {
 }
 
 .pg-pill-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
   border: 0;
   border-radius: 999px;
   padding: 0.6rem 1.2rem;
@@ -454,24 +579,151 @@ code {
 }
 
 .pg-checkbox-switch {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0; /* the dialog rows are flex; keep the box at full size */
+  margin: 0.25rem;
   accent-color: #7c3aed;
 }
 
-@media (max-width: 800px) {
+@supports (height: 1dvh) {
   .pg-layout {
-    grid-template-columns: 1fr;
+    min-height: 100dvh;
   }
 
   .pg-sidebar {
-    position: static;
-    height: auto;
-    border-right: 0;
+    height: 100dvh;
+  }
+}
+
+/* ----------------------------------------------------------------- focus */
+
+.pg-btn:focus-visible,
+.pg-nav__link:focus-visible,
+.pg-picker__select:focus-visible,
+.pg-pill-button:focus-visible,
+.pg-footer a:focus-visible,
+.pg-row input:focus-visible {
+  outline: 2px solid #0e7490;
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------- touch */
+
+/* Coarse pointers (fingers): 44px targets for every playground control. */
+@media (pointer: coarse) {
+  .pg-btn,
+  .pg-nav__link,
+  .pg-footer a,
+  .pg-footer .nsr-settings-link {
+    min-height: 2.75rem;
+  }
+
+  .pg-alert label,
+  .pg-card label {
+    min-height: 2.75rem;
+  }
+}
+
+/* ----------------------------------------------------------------- phone */
+
+@media (max-width: 800px) {
+  .pg-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pg-sidebar {
+    display: none;
+  }
+
+  .pg-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 80; /* below the library banner (90) and dialog (100) */
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     border-bottom: 1px solid #e4e4e7;
+    background: #ffffff;
+    padding: 0.75rem 1rem;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .pg-brand--inline {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .pg-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .pg-picker__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #52525b;
+  }
+
+  .pg-picker__select {
+    width: 100%;
+    min-height: 2.75rem;
+    border: 1px solid #d4d4d8;
+    border-radius: 0.6rem;
+    background: #ffffff;
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+    /* 16px or larger, or iOS zooms the page when the picker gets focus. */
+    font-size: 1rem;
+    color: inherit;
   }
 
   .pg-main {
-    padding: 1.5rem 1rem 16rem;
+    padding: 1.25rem 1rem calc(var(--pg-banner-height) + 2rem);
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .pg-title {
+    font-size: 1.35rem;
+  }
+
+  .pg-card,
+  .pg-alert {
+    padding: 0.9rem 1rem;
+  }
+
+  .pg-dark-frame {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Every row wraps on a phone; the spacer only matters when there is room. */
+  .pg-row {
+    flex-wrap: wrap;
+  }
+
+  .pg-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .pg-actions .pg-btn {
+    flex: 1 1 auto;
+  }
+
+  .pg-kv__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.15rem;
+    padding: 0.5rem 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }

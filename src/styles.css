@@ -17,6 +17,10 @@
  * `color-mix()` on the component roots, so a custom surface or text color
  * never leaves stale defaults behind. Set the derived variable yourself to
  * opt out of the derivation for that one color.
+ *
+ * On phones (under 640px) the settings dialog is a bottom sheet, the banner
+ * and dialog respect `env(safe-area-inset-*)`, and every control has a tap
+ * target of at least 44px.
  */
 
 :root {
@@ -95,9 +99,17 @@
   inset-inline: 0;
   bottom: 0;
   z-index: var(--nsr-z-banner);
+  /* A long description on a small phone scrolls inside the banner instead
+     of pushing the buttons off screen. */
+  max-height: 100vh;
+  overflow-y: auto;
   border-top: 1px solid var(--_nsr-border);
   background: color-mix(in srgb, var(--nsr-surface) 95%, transparent);
   padding: 1rem;
+  /* Stay clear of the home indicator / rounded corners on notched phones. */
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
   box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -177,7 +189,7 @@
 
 .nsr-button {
   display: inline-flex;
-  height: 2.5rem;
+  min-height: 2.5rem;
   align-items: center;
   justify-content: center;
   border-radius: calc(var(--nsr-radius) * 0.75);
@@ -187,7 +199,9 @@
   font-size: 0.875rem;
   line-height: 1.25rem;
   font-weight: 600;
+  text-align: center;
   cursor: pointer;
+  touch-action: manipulation;
   transition:
     background-color 0.15s ease,
     color 0.15s ease;
@@ -241,7 +255,17 @@
   padding: 0;
   background: var(--_nsr-switch-off);
   cursor: pointer;
+  touch-action: manipulation;
   transition: background-color 0.15s ease;
+}
+
+/* The track is 24px tall; this pads the tap target to 44px without changing
+   how the switch looks. `inset` counts from the padding box, so the 2px
+   border is included: 12px - 2px = 10px beyond the visible edge. */
+.nsr-switch::before {
+  content: "";
+  position: absolute;
+  inset: -0.75rem -0.375rem;
 }
 
 .nsr-switch[aria-checked="true"] {
@@ -283,12 +307,14 @@
   justify-content: space-between;
   gap: 0.5rem;
   border: 0;
+  min-height: 2.75rem;
   border-radius: 0.5rem;
   background: transparent;
   padding: 0.25rem 0;
   font: inherit;
   text-align: left;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .nsr-collapsible__label {
@@ -410,6 +436,32 @@
   width: 100%;
 }
 
+/* Phones: the dialog becomes a bottom sheet. The Save / Close buttons end up
+   under the thumb, the sheet respects the home indicator, and a long list of
+   categories scrolls inside the body while the footer stays put. */
+@media (max-width: 639.98px) {
+  .nsr-settings-dialog {
+    padding: 0;
+  }
+
+  .nsr-settings-dialog[open] {
+    align-items: flex-end;
+  }
+
+  .nsr-dialog__panel {
+    max-height: 92vh;
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .nsr-dialog__footer {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
 @media (min-width: 640px) {
   .nsr-dialog__header {
     padding: 1.5rem;
@@ -437,6 +489,24 @@
 
   .nsr-dialog__button {
     width: auto;
+  }
+}
+
+/* Mobile browsers: size against the visible area, not the area behind the
+   address bar. `vh` above is the fallback where `dvh` is unsupported. */
+@supports (height: 1dvh) {
+  .nsr-banner {
+    max-height: 100dvh;
+  }
+
+  .nsr-dialog__panel {
+    max-height: 90dvh;
+  }
+
+  @media (max-width: 639.98px) {
+    .nsr-dialog__panel {
+      max-height: 92dvh;
+    }
   }
 }
 
@@ -509,6 +579,9 @@
 /* -------------------------------------------------------- settings link */
 
 .nsr-settings-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
   border: 0;
   padding: 0;
   background: none;
@@ -516,6 +589,7 @@
   color: inherit;
   text-align: left;
   cursor: pointer;
+  touch-action: manipulation;
   transition: color 0.15s ease;
 }
 

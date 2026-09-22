@@ -104,11 +104,12 @@ export function ConsentGatedThirdPartyScripts() {
 
       <div className="pg-card">
         <h3>Targets the inline scripts draw into</h3>
-        <div className="pg-row" style={{ alignItems: "stretch" }}>
-          <div id="demo-analytics-target" className="pg-target" style={{ flex: 1 }}>
+        {/* Side by side on desktop, stacked on phones. */}
+        <div className="pg-grid">
+          <div id="demo-analytics-target" className="pg-target">
             Empty. Appears after consent.
           </div>
-          <div id="demo-marketing-target" className="pg-target" style={{ flex: 1 }}>
+          <div id="demo-marketing-target" className="pg-target">
             Empty. Appears after consent.
           </div>
         </div>
