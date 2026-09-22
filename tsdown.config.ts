@@ -6,7 +6,7 @@ export default defineConfig({
     server: "src/server.ts",
   },
   format: ["esm", "cjs"],
-  platform: "browser",
+  platform: "neutral",
   dts: true,
   sourcemap: true,
   clean: true,
