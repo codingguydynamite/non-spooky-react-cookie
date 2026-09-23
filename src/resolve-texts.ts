@@ -37,11 +37,31 @@ function mergeDeep<T extends Record<string, unknown>>(
 }
 
 /**
+ * Finds the built-in texts for a language code. Matching ignores case, and a
+ * region or script suffix falls back to the base language ("pl-PL" and
+ * "de_AT" resolve to "pl" and "de"). Unknown languages get English.
+ */
+function builtInTextsFor(language: string): Texts {
+  const code = language.toLowerCase();
+  const base = code.split(/[-_]/)[0] ?? code;
+
+  return builtInTexts[code] ?? builtInTexts[base] ?? en;
+}
+
+/**
  * Resolves the final texts: built-in texts for the chosen language,
- * merged with any user-provided overrides. Unknown languages fall back to English.
+ * merged with any user-provided overrides.
  */
 export function resolveTexts(language: string = "en", texts?: DeepPartial<Texts>): Texts {
-  const base = builtInTexts[language] ?? builtInTexts.en;
+  const base = builtInTextsFor(language);
 
   return mergeDeep(base, texts);
+}
+
+/** Turns `texts.dialog.itemsLabel` into the word shown next to `count`. */
+export function resolveItemsLabel(
+  label: Texts["dialog"]["itemsLabel"],
+  count: number,
+): string {
+  return typeof label === "function" ? label(count) : label;
 }

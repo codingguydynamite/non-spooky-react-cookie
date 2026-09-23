@@ -211,7 +211,7 @@ The status is gated on the script's `category`; the hook itself never loads anyt
 
 ## Your own texts (fully typed)
 
-`language` picks the built-in texts (`en` default, `de`, `pl`). `texts` lets you override or extend any string — every field is typed, so you get full autocomplete.
+`language` picks the built-in texts (`en` default, `de`, `pl`). Region codes resolve to their base language, so `"pl-PL"` or `"de_AT"` work too; any other language falls back to English. `texts` lets you override or extend any string — every field is typed, so you get full autocomplete.
 
 ```tsx
 <CookieBannerConfigurationProvider
@@ -236,6 +236,48 @@ The status is gated on the script's `category`; the hook itself never loads anyt
 ```
 
 Category and item names passed through `config` win over `texts`.
+
+`dialog.itemsLabel` is the word next to the item count ("2 Services"). It takes a string or a function of the count, so languages with several plural forms get the right one:
+
+```tsx
+texts={{
+  dialog: {
+    itemsLabel: (count) => (count === 1 ? "tracker" : "trackers"),
+  },
+}}
+```
+
+Pass a stable `texts` object: define it outside the component or wrap it in `useMemo`. The provider re-merges the texts whenever the object's identity changes, so an inline literal redoes that work on every render.
+
+### With react-i18next (or any other i18n library)
+
+The library has no `t()` of its own. Feed it your translations through `texts`:
+
+```tsx
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { CookieBannerConfigurationProvider, type TextOverrides } from "non-spooky-react-cookie";
+
+function CookieProvider({ children }: { children: React.ReactNode }) {
+  const { t, i18n } = useTranslation();
+
+  const texts = useMemo<TextOverrides>(
+    () => ({
+      banner: { title: t("cookies.banner.title"), acceptAll: t("cookies.banner.acceptAll") },
+      dialog: { itemsLabel: (count) => t("cookies.dialog.services", { count }) },
+    }),
+    [t],
+  );
+
+  return (
+    <CookieBannerConfigurationProvider language={i18n.resolvedLanguage} texts={texts}>
+      {children}
+    </CookieBannerConfigurationProvider>
+  );
+}
+```
+
+Strings you leave out come from the built-in texts for `language`.
 
 ## Styling
 
@@ -376,8 +418,8 @@ By default, a visitor whose browser sends the signal and who has no stored decis
 
 - `config` – consent categories (object map, keyed by category id)
 - `scripts` – third-party scripts to manage (object map, keyed by script id — see "Managing third-party scripts")
-- `language` – `"en"` (default), `"de"` or `"pl"`
-- `texts` – typed overrides of any built-in string
+- `language` – `"en"` (default), `"de"` or `"pl"`; region codes like `"pl-PL"` resolve to the base language
+- `texts` – typed overrides of any built-in string; pass a stable (memoized) object
 - `theme` – color palette, `darkTheme` – dark-mode overrides (see "Styling")
 - `components` – swap the default `Button` / `Switch`
 - `storageKey` – localStorage key and/or cookie name (default `"non-spooky-react-cookie"`)

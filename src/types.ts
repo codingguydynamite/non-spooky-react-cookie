@@ -5,7 +5,11 @@ import type * as React from "react";
  * Used so users can override only the texts they care about.
  */
 export type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+  [K in keyof T]?: T[K] extends (...args: never[]) => unknown
+    ? T[K]
+    : T[K] extends object
+      ? DeepPartial<T[K]>
+      : T[K];
 };
 
 /** A single fine-grained entry inside a category, e.g. "Meta Pixel" inside Marketing. */
@@ -133,8 +137,12 @@ export type Texts = {
     description: string;
     save: string;
     close: string;
-    /** Shown next to the item count on the collapsible trigger, e.g. "2 Services". */
-    itemsLabel: string;
+    /**
+     * Word shown next to the item count on the collapsible trigger, e.g. the
+     * "Services" in "2 Services". Pass a function to pick the plural form
+     * for the count, e.g. `(count) => (count === 1 ? "Service" : "Services")`.
+     */
+    itemsLabel: string | ((count: number) => string);
   };
   footerLink: string;
   /** Per-category and per-item texts, keyed by their ids. */
@@ -290,7 +298,11 @@ export type CookieBannerConfigurationProviderProps = {
    * `cleanup`) when consent is withdrawn.
    */
   scripts?: ConsentScripts;
-  /** Language of the built-in texts: "en" (default), "de", or "pl". */
+  /**
+   * Language of the built-in texts: "en" (default), "de", or "pl". Region
+   * codes resolve to their base language ("pl-PL" -> "pl"); anything else
+   * falls back to English.
+   */
   language?: string;
   /** Override or extend any built-in text. Fully typed. */
   texts?: TextOverrides;

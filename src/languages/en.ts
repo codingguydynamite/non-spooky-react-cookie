@@ -16,7 +16,7 @@ export const en: Texts = {
       "Choose which optional categories you want to allow. Necessary technologies are required for the website to work.",
     save: "Save selection",
     close: "Close",
-    itemsLabel: "Services",
+    itemsLabel: (count) => (count === 1 ? "Service" : "Services"),
   },
   footerLink: "Cookie settings",
   categories: {

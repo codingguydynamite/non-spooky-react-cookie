@@ -16,7 +16,7 @@ export const de: Texts = {
       "Wählen Sie aus, welche optionalen Kategorien Sie erlauben möchten. Notwendige Technologien sind für den Betrieb der Website erforderlich.",
     save: "Auswahl speichern",
     close: "Schließen",
-    itemsLabel: "Dienste",
+    itemsLabel: (count) => (count === 1 ? "Dienst" : "Dienste"),
   },
   footerLink: "Cookie-Einstellungen",
   categories: {
