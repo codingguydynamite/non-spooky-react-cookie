@@ -298,6 +298,11 @@
   transform: translateX(1.25rem);
 }
 
+/* translateX has no logical form, so right-to-left moves the thumb the other way. */
+.nsr-switch[aria-checked="true"]:dir(rtl) .nsr-switch__thumb {
+  transform: translateX(-1.25rem);
+}
+
 /* ---------------------------------------------------------- collapsible */
 
 .nsr-collapsible__trigger {
@@ -312,7 +317,7 @@
   background: transparent;
   padding: 0.25rem 0;
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -587,7 +592,7 @@
   background: none;
   font: inherit;
   color: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   touch-action: manipulation;
   transition: color 0.15s ease;

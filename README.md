@@ -58,7 +58,9 @@ In the Next.js App Router put this in a client component (`"use client"`) and re
 - `useConsentScript` – **reactive**, consent-gated load status (`blocked | loading | loaded | error`) for a script declared in the provider
 - `initGoogleTracker` / `updateGoogleTracker` – Google consent mode sync
 - `localStorageAdapter` / `createCookieStorage` / `createBothStorage` – the built-in storage adapters
-- `non-spooky-react-cookie/server` → `readPreferencesFromCookies` – read the decision on the server (no React, no `window`)
+- `getBuiltInTexts` / `BUILT_IN_LANGUAGES` – the built-in en/de/pl texts as plain JSON, e.g. for a CMS field's default value
+- `non-spooky-react-cookie/server` → `readPreferencesFromCookies`, `getBuiltInTexts`, `BUILT_IN_LANGUAGES` – server-safe (no React, no `window`)
+- Types for texts: `Texts`, `TextOverrides`, `DeepPartialNullable`, `BuiltInLanguage` (see "Your own texts")
 
 ## Defining consent categories
 
@@ -237,15 +239,7 @@ The status is gated on the script's `category`; the hook itself never loads anyt
 
 Category and item names passed through `config` win over `texts`.
 
-`dialog.itemsLabel` is the word next to the item count ("2 Services"). It takes a string or a function of the count, so languages with several plural forms get the right one:
-
-```tsx
-texts={{
-  dialog: {
-    itemsLabel: (count) => (count === 1 ? "tracker" : "trackers"),
-  },
-}}
-```
+`dialog.itemsLabel` labels the trigger that reveals a category's items. The count follows in parentheses, "Show services (2)", so the label needs no plural forms.
 
 Pass a stable `texts` object: define it outside the component or wrap it in `useMemo`. The provider re-merges the texts whenever the object's identity changes, so an inline literal redoes that work on every render.
 
@@ -279,9 +273,66 @@ function CookieProvider({ children }: { children: React.ReactNode }) {
 
 Strings you leave out come from the built-in texts for `language`.
 
+### Texts from a CMS
+
+Texts can come from a headless CMS or a database, one document per locale, and be edited by people who never touch the code. Three rules make that work:
+
+- `null` counts as not set. A CMS returns a field an editor left blank as `null`, and the built-in text for that field stays. An empty string `""` is a deliberate value and replaces it.
+- Every text is a plain string, so overrides and the built-in texts are plain JSON.
+- `TextOverrides` is the type for this: every field optional, every field nullable. A CMS's generated document type with `string | null` fields usually assigns to it with no mapping. It is built on `DeepPartialNullable<T>`, which is exported for your own shapes.
+
+In Next.js, read the document in a server component and pass it down. The provider is a client component, so whatever crosses into it has to be serializable. `scripts` carries callbacks, so declare it in a client module:
+
+```tsx
+// app/[lang]/cookie-consent.tsx
+"use client";
+
+import {
+  CookieBanner,
+  CookieBannerConfigurationProvider,
+  type ConsentScripts,
+  type TextOverrides,
+} from "non-spooky-react-cookie";
+
+const scripts: ConsentScripts = {
+  plausible: { category: "analytics", src: "https://plausible.io/js/script.js", defer: true },
+};
+
+export function CookieConsent(props: {
+  language: string;
+  texts: TextOverrides | null;
+  policyUrl: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <CookieBannerConfigurationProvider
+      language={props.language}
+      texts={props.texts}
+      scripts={scripts}
+      storage="cookie"
+    >
+      {props.children}
+      <CookieBanner policyUrl={props.policyUrl} />
+    </CookieBannerConfigurationProvider>
+  );
+}
+```
+
+```tsx
+// app/[lang]/layout.tsx (a server component)
+const texts = await cms.getCookieBannerTexts(lang); // null fields are fine
+return <CookieConsent language={lang} texts={texts} policyUrl={`/${lang}/privacy`}>{children}</CookieConsent>;
+```
+
+Keep the category ids in code, next to `scripts`, because a script names the category that gates it. The CMS then supplies only the words, under `texts.categories[<id>]`.
+
+`getBuiltInTexts(language)` and `BUILT_IN_LANGUAGES` (typed as `BuiltInLanguage`) are exported from both entries, `non-spooky-react-cookie` and `non-spooky-react-cookie/server`. Use them to fill a CMS field's default value, or to see which languages need a translation before they stop falling back to English.
+
 ## Styling
 
-The package ships one small stylesheet and no framework dependency. Three layers, from simplest to most control:
+The package ships one small stylesheet and no framework dependency. It follows `dir="rtl"` on any ancestor: text aligns to the start and the switch moves the other way.
+
+Three layers, from simplest to most control:
 
 ### 1. The `theme` prop
 
@@ -418,8 +469,8 @@ By default, a visitor whose browser sends the signal and who has no stored decis
 
 - `config` – consent categories (object map, keyed by category id)
 - `scripts` – third-party scripts to manage (object map, keyed by script id — see "Managing third-party scripts")
-- `language` – `"en"` (default), `"de"` or `"pl"`; region codes like `"pl-PL"` resolve to the base language
-- `texts` – typed overrides of any built-in string; pass a stable (memoized) object
+- `language` – `"en"` (default), `"de"` or `"pl"` for the built-in texts; region codes like `"pl-PL"` resolve to the base language.
+- `texts` – typed overrides of any built-in string, where `null` keeps the built-in one; pass a stable (memoized) object (see "Texts from a CMS")
 - `theme` – color palette, `darkTheme` – dark-mode overrides (see "Styling")
 - `components` – swap the default `Button` / `Switch`
 - `storageKey` – localStorage key and/or cookie name (default `"non-spooky-react-cookie"`)
@@ -503,7 +554,7 @@ Because consent can be fine-grained, a category grants its signals when the cate
 
 ## Examples
 
-The [`examples/vite-playground`](./examples/README.md) app has one page per feature: basic banner, fine-grained items, consent-gated scripts, loading a library only after consent, every storage strategy, a custom adapter, SSR initial preferences, languages, theming and dark mode, custom components, Google consent mode, version bumps, and programmatic control.
+The [`examples/vite-playground`](./examples/README.md) app has one page per feature: basic banner, fine-grained items, consent-gated scripts, loading a library only after consent, every storage strategy, a custom adapter, SSR initial preferences, languages, texts from a CMS with right-to-left, theming and dark mode, custom components, Google consent mode, version bumps, and programmatic control.
 
 ```bash
 git clone https://github.com/codingguydynamite/non-spooky-react-cookie

@@ -5,11 +5,16 @@ import type * as React from "react";
  * Used so users can override only the texts they care about.
  */
 export type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends (...args: never[]) => unknown
-    ? T[K]
-    : T[K] extends object
-      ? DeepPartial<T[K]>
-      : T[K];
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
+
+/**
+ * `DeepPartial` that also accepts `null` at every level. A CMS usually returns
+ * an empty field as `null` (Payload's generated types say `string | null`), and
+ * the merge treats `null` exactly like a missing key: the built-in text stays.
+ */
+export type DeepPartialNullable<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartialNullable<T[K]> | null : T[K] | null;
 };
 
 /** A single fine-grained entry inside a category, e.g. "Meta Pixel" inside Marketing. */
@@ -138,11 +143,10 @@ export type Texts = {
     save: string;
     close: string;
     /**
-     * Word shown next to the item count on the collapsible trigger, e.g. the
-     * "Services" in "2 Services". Pass a function to pick the plural form
-     * for the count, e.g. `(count) => (count === 1 ? "Service" : "Services")`.
+     * Label of the collapsible trigger that reveals a category's items, e.g.
+     * "Show services". The item count follows in parentheses: "Show services (2)".
      */
-    itemsLabel: string | ((count: number) => string);
+    itemsLabel: string;
   };
   footerLink: string;
   /** Per-category and per-item texts, keyed by their ids. */
@@ -151,10 +155,11 @@ export type Texts = {
 
 /**
  * The provider's `texts` prop: override any built-in string. Every field is
- * optional, so you list only what you want to change. Use this ready-made
- * type instead of spelling out `DeepPartial<Texts>`.
+ * optional, so you list only what you want to change, and `null` counts as
+ * not set. Every value is plain JSON, so it can come from a CMS or be passed
+ * from a React Server Component.
  */
-export type TextOverrides = DeepPartial<Texts>;
+export type TextOverrides = DeepPartialNullable<Texts>;
 
 /**
  * Color palette. Provide any subset; everything else keeps the built-in look.
@@ -262,9 +267,9 @@ export type SwitchLikeProps = {
 /** Props of the default Collapsible (a controlled or self-managed disclosure). */
 export type CollapsibleProps = {
   children: React.ReactNode;
-  /** Number of entries inside, shown next to the label, e.g. "2". */
+  /** Number of entries inside, shown after the label, e.g. "(2)". */
   count: number;
-  /** Localized word shown next to the count, e.g. "Services" / "Dienste". */
+  /** Localized trigger label, e.g. "Show services" / "Dienste anzeigen". */
   label: string;
   /** Controlled open state. Omit to let the component manage its own state. */
   open?: boolean;

@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { de } from "../src/languages/de";
 import { en } from "../src/languages/en";
 import { pl } from "../src/languages/pl";
-import { resolveItemsLabel, resolveTexts } from "../src/resolve-texts";
+import { BUILT_IN_LANGUAGES, getBuiltInTexts, resolveTexts } from "../src/resolve-texts";
+import type { TextOverrides } from "../src/types";
 
 describe("resolveTexts", () => {
   it("returns the built-in texts for a known language", () => {
@@ -43,35 +44,53 @@ describe("resolveTexts", () => {
     const merged = resolveTexts("en", { banner: { title: undefined } });
     expect(merged.banner.title).toBe(en.banner.title);
   });
-});
 
-describe("resolveItemsLabel", () => {
-  it("returns a plain string label as is", () => {
-    expect(resolveItemsLabel("Services", 1)).toBe("Services");
-  });
-
-  it("picks the English and German plural forms", () => {
-    expect(resolveItemsLabel(en.dialog.itemsLabel, 1)).toBe("Service");
-    expect(resolveItemsLabel(en.dialog.itemsLabel, 2)).toBe("Services");
-    expect(resolveItemsLabel(de.dialog.itemsLabel, 1)).toBe("Dienst");
-    expect(resolveItemsLabel(de.dialog.itemsLabel, 3)).toBe("Dienste");
-  });
-
-  it("picks the Polish plural forms", () => {
-    const label = (count: number) => resolveItemsLabel(pl.dialog.itemsLabel, count);
-
-    expect(label(1)).toBe("Usługa");
-    expect([2, 3, 4, 22, 24, 102].map(label)).toEqual(Array(6).fill("Usługi"));
-    expect([0, 5, 11, 12, 13, 14, 21, 25, 112].map(label)).toEqual(
-      Array(9).fill("Usług"),
-    );
-  });
-
-  it("accepts a function override through texts", () => {
-    const texts = resolveTexts("en", {
-      dialog: { itemsLabel: (count) => (count === 1 ? "tracker" : "trackers") },
+  it("treats null like a missing key, the way a CMS returns an empty field", () => {
+    const merged = resolveTexts("pl", {
+      banner: { title: null, acceptAll: "Tak" },
+      dialog: null,
+      categories: { analytics: { title: null, description: "Statystyki" } },
     });
 
-    expect(resolveItemsLabel(texts.dialog.itemsLabel, 4)).toBe("trackers");
+    expect(merged.banner.title).toBe(pl.banner.title);
+    expect(merged.banner.acceptAll).toBe("Tak");
+    expect(merged.dialog).toEqual(pl.dialog);
+    expect(merged.categories.analytics?.title).toBe(pl.categories.analytics?.title);
+    expect(merged.categories.analytics?.description).toBe("Statystyki");
+    expect(resolveTexts("en", null)).toEqual(en);
+  });
+
+  it("keeps an empty string as a deliberate value", () => {
+    expect(resolveTexts("en", { banner: { title: "" } }).banner.title).toBe("");
+  });
+});
+
+describe("getBuiltInTexts", () => {
+  it("lists every built-in language", () => {
+    expect(BUILT_IN_LANGUAGES.map((code) => getBuiltInTexts(code))).toEqual([en, de, pl]);
+  });
+
+  it("returns plain JSON, safe to store in a CMS or send to the client", () => {
+    for (const code of BUILT_IN_LANGUAGES) {
+      const texts = getBuiltInTexts(code);
+      expect(JSON.parse(JSON.stringify(texts))).toEqual(texts);
+    }
+  });
+});
+
+describe("text override types", () => {
+  it("accept what a CMS returns: optional fields that may be null", () => {
+    type CmsDocument = {
+      banner?: { title?: string | null; description?: string | null } | null;
+      dialog?: { itemsLabel?: string | null } | null;
+      categories?: Record<string, { title?: string | null } | null> | null;
+    };
+
+    // A plain assignment rather than `expectTypeOf().toExtend()`, whose own
+    // error types fail on these nullable nested shapes. A mismatch here fails
+    // `pnpm typecheck`.
+    const document: CmsDocument = { dialog: { itemsLabel: null } };
+    const overrides: TextOverrides = document;
+    expect(resolveTexts("en", overrides).dialog.itemsLabel).toBe(en.dialog.itemsLabel);
   });
 });

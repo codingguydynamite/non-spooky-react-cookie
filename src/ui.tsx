@@ -82,7 +82,7 @@ export function Collapsible({
         onClick={toggle}
       >
         <span className="nsr-collapsible__label">
-          {count} {label}
+          {label} ({count})
         </span>
         <svg
           className="nsr-collapsible__chevron"

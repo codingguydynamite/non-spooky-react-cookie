@@ -15,6 +15,8 @@ export {
   updateGoogleTracker,
 } from "./integrations/google-tracker";
 export type { ScriptStatus } from "./integrations/script-runtime";
+export type { BuiltInLanguage } from "./resolve-texts";
+export { BUILT_IN_LANGUAGES, getBuiltInTexts } from "./resolve-texts";
 export {
   createBothStorage,
   createCookieStorage,
@@ -37,6 +39,7 @@ export type {
   CookieSettingsLinkProps,
   CookieStorageOptions,
   DeepPartial,
+  DeepPartialNullable,
   ItemTexts,
   PreferenceCategory,
   PreferenceComponents,

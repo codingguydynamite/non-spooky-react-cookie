@@ -3,7 +3,6 @@
 import type * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { usePreferences } from "./hooks/usePreferences";
-import { resolveItemsLabel } from "./resolve-texts";
 import type { CookieSettingsDialogProps } from "./types";
 import { Button, Collapsible, cn, Switch } from "./ui";
 
@@ -131,7 +130,7 @@ function OpenSettingsDialog({
                 {items.length > 0 ? (
                   <CollapsibleComponent
                     count={items.length}
-                    label={resolveItemsLabel(texts.dialog.itemsLabel, items.length)}
+                    label={texts.dialog.itemsLabel}
                     contentClassName="nsr-category__items"
                   >
                     {items.map((item) => {

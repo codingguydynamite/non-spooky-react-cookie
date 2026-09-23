@@ -25,6 +25,7 @@ The playground works on phones too: open the dev server URL on a device in the s
 | `CustomStorageAdapterSessionStorage.tsx` | A custom `PreferencesStorage` adapter |
 | `SsrInitialPreferencesNoBannerFlash.tsx` | `readPreferencesFromCookies` from the `/server` entry + `initialPreferences` |
 | `BuiltInLanguagesAndTextOverrides.tsx` | `language="en" | "de" | "pl"` and typed `texts` overrides |
+| `CmsSuppliedTexts.tsx` | `texts` as a CMS returns them (`TextOverrides`): `null` keeps the built-in text, and Arabic under `dir="rtl"` |
 | `ThemeColorsAndDarkMode.tsx` | The `theme` prop and the `.dark` ancestor palette |
 | `CustomButtonAndSwitchComponents.tsx` | Swapping `Button` / `Switch` via `components`, plus `className` props |
 | `GoogleConsentModeSync.tsx` | `googleConsentMode` with a live `dataLayer` log |

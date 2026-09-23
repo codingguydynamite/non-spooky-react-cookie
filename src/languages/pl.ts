@@ -1,14 +1,5 @@
 import type { Texts } from "../types";
 
-/** 1 usługa, 2-4 / 22-24 usługi, 0 / 5-21 / 25 usług. */
-function polishServices(count: number): string {
-  if (count === 1) return "Usługa";
-  const lastDigit = count % 10;
-  const lastTwo = count % 100;
-  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) return "Usługi";
-  return "Usług";
-}
-
 export const pl: Texts = {
   banner: {
     title: "Ustawienia prywatności",
@@ -25,7 +16,7 @@ export const pl: Texts = {
       "Wybierz, które opcjonalne kategorie chcesz włączyć. Technologie niezbędne są wymagane do działania strony.",
     save: "Zapisz wybór",
     close: "Zamknij",
-    itemsLabel: polishServices,
+    itemsLabel: "Pokaż usługi",
   },
   footerLink: "Ustawienia cookies",
   categories: {

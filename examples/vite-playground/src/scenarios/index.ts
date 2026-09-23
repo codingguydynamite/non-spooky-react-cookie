@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { BasicBannerWithDefaults } from "./BasicBannerWithDefaults";
 import { BuiltInLanguagesAndTextOverrides } from "./BuiltInLanguagesAndTextOverrides";
+import { CmsSuppliedTexts } from "./CmsSuppliedTexts";
 import { ConsentGatedThirdPartyScripts } from "./ConsentGatedThirdPartyScripts";
 import { CustomButtonAndSwitchComponents } from "./CustomButtonAndSwitchComponents";
 import { CustomCategoriesWithFineGrainedItems } from "./CustomCategoriesWithFineGrainedItems";
@@ -87,6 +88,14 @@ export const scenarios: Scenario[] = [
       "en / de / pl out of the box; override any single string with full type safety.",
     file: "BuiltInLanguagesAndTextOverrides.tsx",
     Component: BuiltInLanguagesAndTextOverrides,
+  },
+  {
+    id: "cms-texts",
+    title: "Texts from a CMS, right-to-left",
+    summary:
+      "Plain-JSON overrides as a CMS returns them: null keeps the built-in text, and Arabic renders right-to-left.",
+    file: "CmsSuppliedTexts.tsx",
+    Component: CmsSuppliedTexts,
   },
   {
     id: "theme",
