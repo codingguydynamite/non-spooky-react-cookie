@@ -1,0 +1,624 @@
+/*
+ * non-spooky-react-cookie — the one stylesheet.
+ *
+ * Import it once in your app:
+ *   import "non-spooky-react-cookie/styles.css";
+ *
+ * Every color, radius and z-index is a `--nsr-*` custom property. Override
+ * them globally (on `:root`), per theme (`.dark` or `[data-theme="dark"]`),
+ * or per provider via the `theme` / `darkTheme` props, which write the same
+ * properties into a scoped `<style>` rule for the banner, dialog and settings
+ * link. No Tailwind required; every component also accepts `className` props
+ * if you want to add your own.
+ *
+ * Five colors are the real inputs: primary, primary-text, accent, surface and
+ * text. Everything else (muted text, borders, secondary buttons, hover
+ * backgrounds, switch track/thumb, focus ring) is derived from those with
+ * `color-mix()` on the component roots, so a custom surface or text color
+ * never leaves stale defaults behind. Set the derived variable yourself to
+ * opt out of the derivation for that one color.
+ *
+ * On phones (under 640px) the settings dialog is a bottom sheet, the banner
+ * and dialog respect `env(safe-area-inset-*)`, and every control has a tap
+ * target of at least 44px.
+ */
+
+:root {
+  --nsr-primary: #155e75;
+  --nsr-primary-text: #ffffff;
+  --nsr-accent: #0e7490;
+  --nsr-surface: #ffffff;
+  --nsr-text: #09090b;
+  --nsr-backdrop: rgb(9 9 11 / 0.6);
+  --nsr-radius: 1rem;
+  --nsr-font: inherit;
+  --nsr-z-banner: 90;
+  --nsr-z-dialog: 100;
+}
+
+.dark,
+[data-theme="dark"] {
+  --nsr-primary: #22d3ee;
+  --nsr-primary-text: #083344;
+  --nsr-accent: #22d3ee;
+  --nsr-surface: #09090b;
+  --nsr-text: #fafafa;
+}
+
+/*
+ * Derived colors, resolved on the component roots so they see the values
+ * the `theme` prop / a `.dark` ancestor set for *this* banner or dialog.
+ * `--nsr-<name>` (public, unset by default) wins over the derivation.
+ */
+.nsr-banner,
+.nsr-settings-dialog,
+.nsr-settings-link {
+  --_nsr-muted: var(
+    --nsr-muted,
+    color-mix(in srgb, var(--nsr-text) 65%, var(--nsr-surface))
+  );
+  --_nsr-border: var(
+    --nsr-border,
+    color-mix(in srgb, var(--nsr-text) 12%, var(--nsr-surface))
+  );
+  --_nsr-surface-muted: var(
+    --nsr-surface-muted,
+    color-mix(in srgb, var(--nsr-text) 4%, var(--nsr-surface))
+  );
+  --_nsr-secondary: var(--nsr-secondary, var(--nsr-surface));
+  --_nsr-secondary-text: var(--nsr-secondary-text, var(--nsr-text));
+  --_nsr-primary-hover: var(
+    --nsr-primary-hover,
+    color-mix(in srgb, var(--nsr-primary) 85%, var(--nsr-primary-text))
+  );
+  --_nsr-ring: var(--nsr-ring, var(--nsr-primary));
+  --_nsr-switch-off: var(
+    --nsr-switch-off,
+    color-mix(in srgb, var(--nsr-text) 22%, var(--nsr-surface))
+  );
+  /* Off: the surface color sits on the tinted track. On: the primary text
+     color, which the palette already guarantees to contrast the primary. */
+  --_nsr-switch-thumb-off: var(--nsr-switch-thumb, var(--nsr-surface));
+  --_nsr-switch-thumb-on: var(--nsr-switch-thumb, var(--nsr-primary-text));
+  --_nsr-switch-thumb-ring: color-mix(in srgb, var(--nsr-text) 15%, transparent);
+}
+
+/* ---------------------------------------------------------------- reset */
+
+.nsr-banner,
+.nsr-banner *,
+.nsr-settings-dialog,
+.nsr-settings-dialog * {
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------- banner */
+
+.nsr-banner {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: var(--nsr-z-banner);
+  /* A long description on a small phone scrolls inside the banner instead
+     of pushing the buttons off screen. */
+  max-height: 100vh;
+  overflow-y: auto;
+  border-top: 1px solid var(--_nsr-border);
+  background: color-mix(in srgb, var(--nsr-surface) 95%, transparent);
+  padding: 1rem;
+  /* Stay clear of the home indicator / rounded corners on notched phones. */
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--nsr-font);
+  color: var(--nsr-text);
+}
+
+.nsr-banner__card {
+  margin: 0 auto;
+  display: flex;
+  max-width: 72rem;
+  flex-direction: column;
+  gap: 1rem;
+  border-radius: var(--nsr-radius);
+  border: 1px solid var(--_nsr-border);
+  background: var(--nsr-surface);
+  padding: 1.25rem;
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.nsr-banner__text {
+  max-width: 48rem;
+}
+
+.nsr-banner__title {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+  color: var(--nsr-text);
+}
+
+.nsr-banner__description {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  color: var(--_nsr-muted);
+}
+
+.nsr-banner__link {
+  font-weight: 600;
+  color: var(--nsr-accent);
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+
+.nsr-banner__link:hover {
+  text-decoration: underline;
+}
+
+.nsr-banner__actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .nsr-banner__actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .nsr-banner__card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nsr-banner__actions {
+    min-width: 32rem;
+  }
+}
+
+/* --------------------------------------------------------------- button */
+
+.nsr-button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(var(--nsr-radius) * 0.75);
+  border: 1px solid transparent;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.nsr-button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.nsr-button--primary {
+  background: var(--nsr-primary);
+  color: var(--nsr-primary-text);
+}
+
+.nsr-button--primary:hover {
+  background: var(--_nsr-primary-hover);
+}
+
+.nsr-button--secondary {
+  border-color: var(--_nsr-border);
+  background: var(--_nsr-secondary);
+  color: var(--_nsr-secondary-text);
+}
+
+.nsr-button--secondary:hover {
+  background: var(--_nsr-surface-muted);
+}
+
+.nsr-button--ghost {
+  background: transparent;
+  color: var(--_nsr-muted);
+}
+
+.nsr-button--ghost:hover {
+  background: var(--_nsr-surface-muted);
+  color: var(--nsr-text);
+}
+
+/* --------------------------------------------------------------- switch */
+
+.nsr-switch {
+  position: relative;
+  display: inline-flex;
+  height: 1.5rem;
+  width: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  padding: 0;
+  background: var(--_nsr-switch-off);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease;
+}
+
+/* The track is 24px tall; this pads the tap target to 44px without changing
+   how the switch looks. `inset` counts from the padding box, so the 2px
+   border is included: 12px - 2px = 10px beyond the visible edge. */
+.nsr-switch::before {
+  content: "";
+  position: absolute;
+  inset: -0.75rem -0.375rem;
+}
+
+.nsr-switch[aria-checked="true"] {
+  background: var(--nsr-primary);
+}
+
+.nsr-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.nsr-switch__thumb {
+  pointer-events: none;
+  display: block;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 9999px;
+  background: var(--_nsr-switch-thumb-off);
+  box-shadow:
+    0 0 0 1px var(--_nsr-switch-thumb-ring),
+    0 4px 6px -2px rgb(0 0 0 / 0.2);
+  transform: translateX(0);
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.nsr-switch[aria-checked="true"] .nsr-switch__thumb {
+  background: var(--_nsr-switch-thumb-on);
+  transform: translateX(1.25rem);
+}
+
+/* translateX has no logical form, so right-to-left moves the thumb the other way. */
+.nsr-switch[aria-checked="true"]:dir(rtl) .nsr-switch__thumb {
+  transform: translateX(-1.25rem);
+}
+
+/* ---------------------------------------------------------- collapsible */
+
+.nsr-collapsible__trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 0;
+  min-height: 2.75rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  padding: 0.25rem 0;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.nsr-collapsible__label {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: var(--nsr-accent);
+}
+
+.nsr-collapsible__chevron {
+  height: 1.5rem;
+  width: 1.5rem;
+  flex-shrink: 0;
+  color: var(--nsr-accent);
+  transition: transform 0.2s ease;
+}
+
+.nsr-collapsible--open .nsr-collapsible__chevron {
+  transform: rotate(180deg);
+}
+
+/* --------------------------------------------------------------- dialog */
+
+.nsr-settings-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--nsr-z-dialog);
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  padding: 1rem;
+  background: transparent;
+  color: var(--nsr-text);
+  font-family: var(--nsr-font);
+}
+
+.nsr-settings-dialog[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Only exists while the dialog is open via showModal(). Inherits from the dialog. */
+.nsr-settings-dialog::backdrop {
+  background: var(--nsr-backdrop, rgb(9 9 11 / 0.6));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.nsr-dialog__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.nsr-dialog__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-height: 90vh;
+  width: 100%;
+  max-width: 42rem;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--nsr-radius);
+  border: 1px solid var(--_nsr-border);
+  background: var(--nsr-surface);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.nsr-dialog__header {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--_nsr-border);
+  padding: 1rem;
+}
+
+.nsr-dialog__title {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  color: var(--nsr-text);
+}
+
+.nsr-dialog__description {
+  margin: 0.375rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--_nsr-muted);
+}
+
+.nsr-dialog__body {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.nsr-dialog__footer {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
+  border-top: 1px solid var(--_nsr-border);
+  padding: 1rem;
+}
+
+.nsr-dialog__button {
+  width: 100%;
+}
+
+/* Phones: the dialog becomes a bottom sheet. The Save / Close buttons end up
+   under the thumb, the sheet respects the home indicator, and a long list of
+   categories scrolls inside the body while the footer stays put. */
+@media (max-width: 639.98px) {
+  .nsr-settings-dialog {
+    padding: 0;
+  }
+
+  .nsr-settings-dialog[open] {
+    align-items: flex-end;
+  }
+
+  .nsr-dialog__panel {
+    max-height: 92vh;
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .nsr-dialog__footer {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+@media (min-width: 640px) {
+  .nsr-dialog__header {
+    padding: 1.5rem;
+  }
+
+  .nsr-dialog__title {
+    font-size: 1.25rem;
+  }
+
+  .nsr-dialog__description {
+    margin-top: 0.5rem;
+    line-height: 1.5rem;
+  }
+
+  .nsr-dialog__body {
+    padding: 1.5rem;
+  }
+
+  .nsr-dialog__footer {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.5rem;
+  }
+
+  .nsr-dialog__button {
+    width: auto;
+  }
+}
+
+/* Mobile browsers: size against the visible area, not the area behind the
+   address bar. `vh` above is the fallback where `dvh` is unsupported. */
+@supports (height: 1dvh) {
+  .nsr-banner {
+    max-height: 100dvh;
+  }
+
+  .nsr-dialog__panel {
+    max-height: 90dvh;
+  }
+
+  @media (max-width: 639.98px) {
+    .nsr-dialog__panel {
+      max-height: 92dvh;
+    }
+  }
+}
+
+/* ------------------------------------------------------------- category */
+
+.nsr-category {
+  border-radius: var(--nsr-radius);
+  border: 1px solid var(--_nsr-border);
+  padding: 1rem;
+}
+
+.nsr-category--required {
+  background: var(--_nsr-surface-muted);
+}
+
+.nsr-category__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nsr-category__title {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  color: var(--nsr-text);
+}
+
+.nsr-category__description {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  color: var(--_nsr-muted);
+}
+
+.nsr-category__items {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+  border-top: 1px solid var(--_nsr-border);
+  padding-top: 0.75rem;
+}
+
+.nsr-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 0.75rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.nsr-item__title {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--nsr-text);
+}
+
+.nsr-item__description {
+  margin: 0.125rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: var(--_nsr-muted);
+}
+
+/* -------------------------------------------------------- settings link */
+
+.nsr-settings-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color 0.15s ease;
+}
+
+.nsr-settings-link:hover {
+  color: var(--nsr-accent);
+}
+
+/* ---------------------------------------------------------------- focus */
+
+.nsr-button:focus-visible,
+.nsr-switch:focus-visible,
+.nsr-collapsible__trigger:focus-visible,
+.nsr-settings-link:focus-visible,
+.nsr-banner__link:focus-visible {
+  outline: 2px solid var(--_nsr-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nsr-button,
+  .nsr-switch,
+  .nsr-switch__thumb,
+  .nsr-collapsible__chevron,
+  .nsr-settings-link {
+    transition: none;
+  }
+}

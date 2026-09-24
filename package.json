@@ -1,0 +1,121 @@
+{
+  "name": "non-spooky-react-cookie",
+  "version": "0.1.0",
+  "description": "A friendly, lightweight cookie consent manager for React and Next.js. Optional scripts stay out of the DOM until the visitor says yes.",
+  "keywords": [
+    "react",
+    "nextjs",
+    "cookie",
+    "cookie-consent",
+    "cookie-banner",
+    "gdpr",
+    "consent-mode",
+    "privacy",
+    "script-loader"
+  ],
+  "license": "MIT",
+  "author": "Kamil Adamski",
+  "homepage": "https://github.com/codingguydynamite/non-spooky-react-cookie#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codingguydynamite/non-spooky-react-cookie.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codingguydynamite/non-spooky-react-cookie/issues"
+  },
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "server": [
+        "./dist/server.d.ts"
+      ]
+    }
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./server": {
+      "import": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.js"
+      },
+      "require": {
+        "types": "./dist/server.d.cts",
+        "default": "./dist/server.cjs"
+      }
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "server",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "check:package": "publint && attw --pack . --exclude-entrypoints ./styles.css",
+    "check:cjs": "node -e \"require('./dist/index.cjs');require('./dist/server.cjs')\"",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm --filter vite-playground typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:package && pnpm check:cjs",
+    "example": "pnpm --filter vite-playground dev",
+    "example:build": "pnpm --filter vite-playground build",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish",
+    "prepublishOnly": "pnpm build"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@biomejs/biome": "^2.5.14",
+    "@changesets/cli": "^3.0.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "jsdom": "^30.1.0",
+    "publint": "^0.3.24",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tsdown": "^0.23.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
