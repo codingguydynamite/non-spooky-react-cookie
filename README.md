@@ -216,6 +216,30 @@ function GoogleMap({ locations }: { locations: Location[] }) {
 
 The status is gated on the script's `category`; the hook itself never loads anything — the provider does, so it must be rendered inside a `CookieBannerConfigurationProvider`. The `<script>` element is created exactly once (deduped by id), so many components can call this for the same id safely.
 
+### Gating iframes and embeds
+
+The `scripts` map manages `<script>` tags only. Iframes (YouTube, Google Maps, chat widgets, …) are gated the same way, but with plain React: check `isAllowed` and render the `<iframe>` only when the matching category or item is accepted. Until then, show a placeholder of the same size so the layout does not jump. The full version lives in the playground's [external media scenario](./examples/README.md):
+
+```tsx
+import { usePreferences } from "non-spooky-react-cookie";
+
+function YouTubeVideo({ videoId }: { videoId: string }) {
+  const { isAllowed, openSettings } = usePreferences();
+
+  if (!isAllowed("youtube")) {
+    return (
+      <div>
+        This video is hosted on YouTube.
+        <button onClick={openSettings}>Manage consent</button>
+      </div>
+    );
+  }
+  return <iframe src={`https://www.youtube-nocookie.com/embed/${videoId}`} allowFullScreen />;
+}
+```
+
+When consent is withdrawn the component re-renders as the placeholder and the iframe unmounts — nothing from the third party stays in the DOM.
+
 ## Your own texts (fully typed)
 
 `language` picks the built-in texts (`en` default, `de`, `pl`). Region codes resolve to their base language, so `"pl-PL"` or `"de_AT"` work too; any other language falls back to English. `texts` lets you override or extend any string — every field is typed, so you get full autocomplete.
@@ -559,7 +583,7 @@ Because consent can be fine-grained, a category grants its signals when the cate
 
 ## Examples
 
-The [`examples/vite-playground`](./examples/README.md) app has one page per feature: basic banner, fine-grained items, consent-gated scripts, loading a library only after consent, every storage strategy, a custom adapter, SSR initial preferences, languages, texts from a CMS with right-to-left, theming and dark mode, custom components, Google consent mode, version bumps, and programmatic control.
+The [`examples/vite-playground`](./examples/README.md) app has one page per feature: basic banner, fine-grained items, consent-gated scripts, loading a library only after consent, external media (YouTube / Google Maps) gated per item, every storage strategy, a custom adapter, SSR initial preferences, languages, texts from a CMS with right-to-left, theming and dark mode, custom components, Google consent mode, version bumps, and programmatic control.
 
 ```bash
 git clone https://github.com/codingguydynamite/non-spooky-react-cookie

@@ -6,6 +6,7 @@ import { ConsentGatedThirdPartyScripts } from "./ConsentGatedThirdPartyScripts";
 import { CustomButtonAndSwitchComponents } from "./CustomButtonAndSwitchComponents";
 import { CustomCategoriesWithFineGrainedItems } from "./CustomCategoriesWithFineGrainedItems";
 import { CustomStorageAdapterSessionStorage } from "./CustomStorageAdapterSessionStorage";
+import { ExternalMedia } from "./ExternalMedia";
 import { GlobalPrivacyControl } from "./GlobalPrivacyControl";
 import { GoogleConsentModeSync } from "./GoogleConsentModeSync";
 import { JustDontGlobal } from "./JustDontGlobal";
@@ -56,6 +57,14 @@ export const scenarios: Scenario[] = [
       "A component that renders a placeholder while blocked, a skeleton while loading, and the real thing once the script is in.",
     file: "LoadLibraryOnlyAfterConsent.tsx",
     Component: LoadLibraryOnlyAfterConsent,
+  },
+  {
+    id: "external-media",
+    title: "External media: YouTube & Google Maps",
+    summary:
+      "A video and a map that stay as placeholders until the visitor accepts the matching item in the external-media category.",
+    file: "ExternalMedia.tsx",
+    Component: ExternalMedia,
   },
   {
     id: "storage",

@@ -21,6 +21,7 @@ The playground works on phones too: open the dev server URL on a device in the s
 | `CustomCategoriesWithFineGrainedItems.tsx` | Your own categories with items; items are accepted independently of their parent |
 | `ConsentGatedThirdPartyScripts.tsx` | External and inline scripts that load/unload with consent, `cleanup`, live status per script |
 | `LoadLibraryOnlyAfterConsent.tsx` | A component that waits for a script (`useConsentScript`) and renders placeholder → skeleton → real UI |
+| `ExternalMedia.tsx` | A YouTube video and a Google Maps embed that stay placeholders until the matching item under the `external-media` category is accepted |
 | `StorageStrategiesLocalStorageCookieBoth.tsx` | `storage="localStorage" | "cookie" | "both"` and `cookieOptions`, with the raw payload shown |
 | `CustomStorageAdapterSessionStorage.tsx` | A custom `PreferencesStorage` adapter |
 | `SsrInitialPreferencesNoBannerFlash.tsx` | `readPreferencesFromCookies` from the `/server` entry + `initialPreferences` |
