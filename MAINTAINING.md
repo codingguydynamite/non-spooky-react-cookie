@@ -69,7 +69,7 @@ gh repo create non-spooky-react-cookie --public --source . --push
 
 Then in the repository settings:
 
-- **Settings → Actions → General → Workflow permissions**: enable **Allow GitHub Actions to create and approve pull requests**. Without it the release workflow cannot open the "chore: release" PR and fails with "Resource not accessible by integration". As of 2026-09-22 this is still **off** for `codingguydynamite/non-spooky-react-cookie`. Flip it in the UI or with:
+- **Settings → Actions → General → Workflow permissions**: enable **Allow GitHub Actions to create and approve pull requests**. Without it the release workflow cannot open the "chore: release" PR and fails with "Resource not accessible by integration". It is on for `codingguydynamite/non-spooky-react-cookie` (the workflow opened PR #11 on 2026-11-10). To flip it in the UI or with:
 
   ```bash
   gh api -X PUT repos/codingguydynamite/non-spooky-react-cookie/actions/permissions/workflow \
@@ -86,7 +86,7 @@ Then in the repository settings:
 
 ### 4.3 First publish is manual
 
-Trusted publishing is configured per package, and the package must exist first. So the very first version is published from your machine (as of 2026-09-22 the package is not on npm yet, so this step is still ahead of you):
+Trusted publishing is configured per package, and the package must exist first. So the very first version is published from your machine. Done: 0.1.0 went out this way on 2026-09-24.
 
 ```bash
 npm login
@@ -160,7 +160,7 @@ What the two validators mean:
 | Release step fails with "Unexpected input(s) 'publish', 'title', 'commit', 'createGithubReleases'" or "The following inputs have been renamed" | `changesets/action@v2` uses kebab-case inputs | Use `publish-script`, `pr-title`, `commit-message`, `create-github-releases`; drop any `GITHUB_TOKEN` env on that step, v2 reads the `github-token` input |
 | Publish fails with E422 mentioning provenance and `repository.url` | `package.json` `repository.url` does not match the GitHub repo the workflow ran in | Point it at `git+https://github.com/codingguydynamite/non-spooky-react-cookie.git`, exact casing |
 | Published fine but no "Provenance" badge on npm | Source repository is private | Expected. Make the repository public if you want provenance |
-| Publish step fails with 404 / E403 / "unable to authenticate" | Trusted publisher not configured, or repo/workflow name differs | Compare 4.4 with the actual repository and workflow filename, exactly |
+| Publish step fails with `E404 Not Found - PUT https://registry.npmjs.org/non-spooky-react-cookie` / E403 / "unable to authenticate", often after `Failed to replace env in config: ${NODE_AUTH_TOKEN}` | Trusted publisher not configured, or repo/workflow name differs. npm rejects the OIDC exchange, pnpm falls back to the empty `NODE_AUTH_TOKEN` from `.npmrc`, and npm answers an anonymous PUT with 404 | Set up 4.4, comparing repository and workflow filename exactly. Then rerun the failed release job (`gh run rerun <run-id> --failed`). Don't push a new commit or bump the version: the version is already on `main`, just not on npm |
 | Publish fails with "npm >= 11.5.1 required" | Old npm on the runner | `release.yml` runs `npm install -g npm@latest`; make sure that step is still there |
 | CI fails on `pnpm install --frozen-lockfile` | `package.json` changed without updating `pnpm-lock.yaml` | Run `pnpm install` locally and commit the lockfile |
 | CI fails in "Lint and format" but `pnpm lint` passes locally | Local Biome version differs from the one in the lockfile | Use `pnpm exec biome`, not a global install |
