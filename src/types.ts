@@ -96,6 +96,14 @@ export type ConsentScript = {
   async?: boolean;
   /** Set `script.defer`. Ignored when `async` is set. */
   defer?: boolean;
+  /**
+   * For a Google Tag Manager (`gtm.js?id=GTM-…`) or gtag.js
+   * (`gtag/js?id=G-…`) `src`, queue the start command Google's snippet
+   * would (`gtm.js` event, or `gtag("js")` + `gtag("config", id)`) before
+   * the script loads. Without it these scripts load but send no data.
+   * Set to `false` if you queue those commands yourself. Default `true`.
+   */
+  googleBootstrap?: boolean;
   /** Called after the script finished loading. */
   onLoad?: () => void;
   /** Called when the script failed to load. */

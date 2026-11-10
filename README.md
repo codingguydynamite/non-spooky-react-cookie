@@ -146,6 +146,7 @@ The script id is the **key** in the `scripts` map (not a field). Each entry acce
 | `attrs` | Extra attributes, e.g. `{ "data-foo": "bar" }`. |
 | `async` | Set `script.async`. **Wins over `defer`** when both are set (setting both is invalid in HTML). |
 | `defer` | Set `script.defer`. Ignored when `async` is set. |
+| `googleBootstrap` | Default `true`. See [Google Tag Manager and gtag.js](#google-tag-manager-and-gtagjs). |
 | `onLoad` / `onError` | Load callbacks. |
 | `cleanup` | Runs when consent is withdrawn and the script is removed. Use it to undo globals, listeners, or other side effects. |
 
@@ -569,7 +570,7 @@ Reading `cookies()` makes the route dynamic, so this needs a Node or edge runtim
 
 ## Google consent mode
 
-If you use Google tags, set `googleConsentMode` on the provider. It then initializes consent mode with everything denied and updates it on every decision, based on the `analytics` and `marketing` categories. Without the prop the provider never touches `window.gtag` / `window.dataLayer`.
+If you use Google tags, set `googleConsentMode` on the provider. It then initializes consent mode with everything denied and updates it on every decision, based on the `analytics` and `marketing` categories. Without the prop the provider never sends consent commands (see the next section for what a Google `src` still queues).
 
 ```tsx
 <CookieBannerConfigurationProvider googleConsentMode scripts={scripts}>
@@ -580,6 +581,31 @@ If you use Google tags, set `googleConsentMode` on the provider. It then initial
 Because consent can be fine-grained, a category grants its signals when the category itself **or any of its items** is accepted — so accepting only "Google Ads" (Marketing master off) still grants `ad_storage`, matching the scripts that actually load.
 
 `updateGoogleTracker(state, categories?)` accepts the category list as an optional second argument for that item-level behavior; without it, it falls back to the plain `analytics` / `marketing` category ids.
+
+### Google Tag Manager and gtag.js
+
+Google's loader scripts send nothing on their own: the official snippets queue a start command before the `<script>` tag. For a `src` on `googletagmanager.com` the provider queues that command for you, right before it inserts the script:
+
+| `src` | Queued first |
+| --- | --- |
+| `https://www.googletagmanager.com/gtm.js?id=GTM-…` | `dataLayer.push({ "gtm.start": …, event: "gtm.js" })` (the "All Pages" trigger fires on it) |
+| `https://www.googletagmanager.com/gtag/js?id=G-…` | `gtag("js", new Date())` and `gtag("config", "G-…")` |
+
+So a plain entry is enough:
+
+```tsx
+const scripts: ConsentScripts = {
+  gtm: {
+    category: "analytics",
+    src: "https://www.googletagmanager.com/gtm.js?id=GTM-XXXXXXX",
+    async: true,
+  },
+};
+```
+
+With `googleConsentMode` on, the consent default and update are queued before this command, so the tags see the visitor's choice. The `l` query parameter (custom data layer name) is respected. A container is started once per page: after withdrawal and re-consent GTM is still in memory, and starting it again would send a second page view.
+
+If you already queue these commands yourself (your own inline snippet, extra `gtag("config")` options), set `googleBootstrap: false` on the entry.
 
 ## Examples
 

@@ -4,6 +4,7 @@
  * that ever inserts a `<script>` element.
  */
 import type { ConsentScript } from "../types";
+import { bootstrapGoogleScript } from "./google-bootstrap";
 import { getScriptStatus, setScriptStatus } from "./script-runtime";
 
 /** Runs a consumer callback; its errors must never break consent enforcement. */
@@ -107,6 +108,9 @@ export function ensureScript(id: string, def: ConsentScript): void {
   };
 
   setScriptStatus(id, "loading");
+
+  // GTM / gtag.js need a start command queued before they load.
+  if (def.googleBootstrap !== false) bootstrapGoogleScript(def.src);
 
   const element = loadScript({
     id,
