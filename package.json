@@ -1,6 +1,6 @@
 {
   "name": "non-spooky-react-cookie",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A friendly, lightweight cookie consent manager for React and Next.js. Optional scripts stay out of the DOM until the visitor says yes.",
   "keywords": [
     "react",
